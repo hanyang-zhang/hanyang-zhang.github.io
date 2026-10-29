@@ -1,0 +1,606 @@
+---
+// The Pelita and LecNote research pictures, opened large: the same flat drawing as the
+// thumbnail, now clickable, on the left; the steps it walks through on the right.
+// Pelita: point at part of a slide, read the answer, keep it. LecNote: one switch
+// between help the learner asks for and help the system pushes. The forest is held
+// still while it's open.
+import { flatScenes } from '../data/profile';
+import pelitaSvg from '../scripts/flat/pelita.svg?raw';
+import lecnoteSvg from '../scripts/flat/lecnote.svg?raw';
+
+interface Props {
+  scene: 'pelita' | 'lecnote';
+  title: string;
+}
+const { scene, title } = Astro.props;
+const words = flatScenes[scene];
+
+// Large, the drawing is cropped to its content, without the thumbnail's margin.
+const crop = { pelita: '8 30 464 304', lecnote: '40 36 400 286' }[scene];
+// Both drawings sit in one page, so the filters and clips they define get the scene's prefix.
+const svg = (scene === 'pelita' ? pelitaSvg : lecnoteSvg)
+  .replace(/ width="\d+" height="\d+"/, '')
+  .replace(/id="(soft|win|stage)"/g, `id="${scene}-$1"`)
+  .replace(/url\(#(soft|win|stage)\)/g, `url(#${scene}-$1)`)
+  .replace(/viewBox="[^"]*"/, `viewBox="${crop}" role="img" aria-label="${title}"`);
+
+const icons: Record<string, string> = {
+  'pelita-0':
+    '<rect x="7" y="9" width="26" height="20" rx="2" fill="#fff"/><rect x="17" y="13" width="12" height="11" fill="#3d6b35" fill-opacity=".1" stroke="#3d6b35" stroke-width="1.6" stroke-dasharray="3 2.4"/><path d="M27 22l6 7 1.5-3 3.2-.6z" fill="#fff" stroke="#24352a" stroke-width="1.4" stroke-linejoin="round"/>',
+  'pelita-1':
+    '<path d="M8 8h24a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H18l-6 5v-5H8a5 5 0 0 1-5-5V13a5 5 0 0 1 5-5z" fill="#fff"/><path d="M10 15h18M10 21h12" stroke="#7fa865" stroke-width="2.6" stroke-linecap="round"/>',
+  'pelita-2':
+    '<rect x="8" y="7" width="24" height="27" rx="3" fill="#fbecb4"/><path d="M13 15h14M13 21h10" stroke="#8a7a3a" stroke-width="2.2" stroke-linecap="round"/><circle cx="29" cy="29" r="7" fill="#3d6b35"/><path d="M29 25.5v7M25.5 29h7" stroke="#fff" stroke-width="2" stroke-linecap="round"/>',
+  'lecnote-0':
+    '<rect x="6" y="8" width="28" height="20" rx="2" fill="#fff"/><rect x="18" y="12" width="12" height="11" fill="#3d6b35" fill-opacity=".1" stroke="#3d6b35" stroke-width="1.6" stroke-dasharray="3 2.4"/><rect x="9" y="30" width="16" height="6" rx="2" fill="#e4eed6" stroke="#3d6b35" stroke-width="1.2"/>',
+  'lecnote-1':
+    '<rect x="6" y="20" width="22" height="12" rx="2.5" fill="#e4eed6" stroke="#3d6b35" stroke-width="1.2" transform="rotate(-6 17 26)"/><rect x="11" y="13" width="22" height="12" rx="2.5" fill="#e4eed6" stroke="#3d6b35" stroke-width="1.2" transform="rotate(5 22 19)"/><rect x="8" y="6" width="22" height="12" rx="2.5" fill="#e4eed6" stroke="#3d6b35" stroke-width="1.2"/>',
+};
+---
+
+<dialog class="flat-box" data-scene={scene} aria-label={title}>
+  <figure>
+    <div class="panel">
+      <div class:list={['stage', { idle: scene === 'pelita' }]}>
+        <Fragment set:html={svg} />
+        <span class="hint">{words.hint}</span>
+      </div>
+      <aside>
+        <p class="eyebrow">{words.eyebrow}</p>
+        <ol class="steps">
+          {
+            words.steps.map((s, i) => (
+              <li class:list={{ on: i === 0 }}>
+                <button type="button">
+                  <span class="icon">
+                    <svg viewBox="0 0 40 40" aria-hidden="true" set:html={icons[`${scene}-${i}`]} />
+                  </span>
+                  <span class="words">
+                    <span class="name">
+                      <span class="n">{String(i + 1).padStart(2, '0')}</span>
+                      {s.title}
+                    </span>
+                    <span class="text">{s.text}</span>
+                  </span>
+                </button>
+              </li>
+            ))
+          }
+        </ol>
+        {'note' in words && <p class="note">{words.note}</p>}
+        {
+          'finding' in words && (
+            <p class="finding">
+              <b>What we found</b>
+              {words.finding}
+            </p>
+          )
+        }
+      </aside>
+      <button class="close" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+    <figcaption>{title}</figcaption>
+  </figure>
+</dialog>
+
+<script>
+  import { mountPelita } from '../scripts/flat/pelita';
+  import { mountLecnote } from '../scripts/flat/lecnote';
+
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll<HTMLDialogElement>('.flat-box').forEach((box) => {
+    const scene = box.dataset.scene!;
+    const panel = box.querySelector<HTMLElement>('.panel')!;
+    const svg = box.querySelector<SVGSVGElement>('.stage svg')!;
+    const items = [...box.querySelectorAll<HTMLLIElement>('.steps li')];
+    const mark = (n: number) =>
+      items.forEach((li, i) => {
+        li.classList.toggle('on', i + 1 === n);
+        li.querySelector('button')!.setAttribute('aria-current', i + 1 === n ? 'step' : 'false');
+      });
+
+    let step: (n: number) => void;
+    let reset = () => {};
+    if (scene === 'pelita') {
+      step = mountPelita(svg, mark, calm);
+    } else {
+      const lecnote = mountLecnote(svg, mark, calm);
+      step = lecnote.step;
+      reset = lecnote.reset;
+    }
+
+    items.forEach((li, i) => li.querySelector('button')!.addEventListener('click', () => step(i + 1)));
+    document.querySelectorAll<HTMLButtonElement>(`.thumb[data-scene="${scene}"]`).forEach((b) =>
+      b.addEventListener('click', () => {
+        box.showModal();
+        window.dispatchEvent(new Event('meadowpause'));
+      }),
+    );
+    box.querySelector('.close')!.addEventListener('click', () => box.close());
+    box.addEventListener('click', (e) => {
+      if (!panel.contains(e.target as Node)) box.close();
+    });
+    box.addEventListener('close', () => {
+      reset();
+      window.dispatchEvent(new Event('meadowresume'));
+    });
+  });
+</script>
+
+<style>
+  .flat-box {
+    max-width: none;
+    max-height: none;
+    width: 100vw;
+    height: 100dvh;
+    margin: 0;
+    padding: 24px;
+    border: 0;
+    background: transparent;
+    opacity: 0;
+    transition:
+      opacity 0.25s ease,
+      overlay 0.25s allow-discrete,
+      display 0.25s allow-discrete;
+  }
+
+  .flat-box[open] {
+    display: grid;
+    place-items: center;
+    opacity: 1;
+  }
+
+  @starting-style {
+    .flat-box[open] {
+      opacity: 0;
+    }
+  }
+
+  .flat-box::backdrop {
+    background: rgb(8 20 12 / 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  figure {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    margin: 0;
+  }
+
+  figcaption {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+    color: rgb(255 255 255 / 0.75);
+  }
+
+  .panel {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    width: min(1100px, calc(100vw - 48px));
+    height: min(640px, calc(100dvh - 90px));
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--paper);
+    box-shadow: 0 20px 60px -10px rgb(0 0 0 / 0.5);
+  }
+
+  /* the drawing keeps its own light paper in both themes */
+  .stage {
+    position: relative;
+    min-height: 0;
+    background: #eef1e6;
+  }
+
+  .stage :global(svg) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hint {
+    position: absolute;
+    left: 20px;
+    bottom: 16px;
+    font: 12px/1 var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b7a6c;
+    pointer-events: none;
+  }
+
+  .close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-3);
+    cursor: pointer;
+  }
+
+  .close:hover {
+    background: color-mix(in srgb, var(--ink) 7%, transparent);
+    color: var(--ink);
+  }
+
+  .close svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+
+  aside {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 28px 26px 24px;
+    border-left: 1px solid var(--rule);
+    background: color-mix(in srgb, var(--paper) 92%, white);
+  }
+
+  .eyebrow {
+    margin: 0 28px 20px 0; /* clear of the close button */
+    font: 12px/1 var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .steps li {
+    position: relative;
+    opacity: 0.55;
+    transition: opacity 0.3s;
+  }
+
+  .steps li:hover {
+    opacity: 0.85;
+  }
+
+  .steps li.on {
+    opacity: 1;
+  }
+
+  /* dashed thread between steps */
+  .steps li:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 21.5px;
+    top: 50px;
+    bottom: -22px;
+    border-left: 1.5px dashed color-mix(in srgb, var(--ink-3) 55%, transparent);
+  }
+
+  .steps button {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    column-gap: 16px;
+    align-items: start;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .steps button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+
+  .icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+
+  .icon svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .on .icon {
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  .words {
+    display: grid;
+    gap: 4px;
+    padding-top: 1px;
+  }
+
+  .name {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+  }
+
+  .on .name {
+    color: var(--accent);
+  }
+
+  .n {
+    margin-right: 6px;
+    font: 11.5px var(--mono);
+    color: var(--ink-3);
+  }
+
+  .text {
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+
+  .note {
+    margin: auto 0 0;
+    padding-top: 20px;
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+
+  .finding {
+    margin: auto 0 0;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+
+  .finding b {
+    display: block;
+    margin-bottom: 4px;
+    font: 11px/1.2 var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  /* ---- inside the drawings ---- */
+  .stage :global(.btn),
+  .stage :global(.spot) {
+    cursor: pointer;
+  }
+
+  .stage :global(.btn:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .stage :global(.spot) {
+    transition:
+      fill-opacity 0.2s,
+      stroke-opacity 0.2s;
+  }
+
+  .stage :global(.spot:hover) {
+    fill-opacity: 0.1;
+    stroke-opacity: 0.7;
+  }
+
+  /* Pelita, before the first click: the parts you can point at breathe in turn. */
+  .idle :global(.spot) {
+    animation: beckon 1.8s ease-in-out infinite;
+  }
+
+  .idle :global(.spot:nth-of-type(2)) {
+    animation-delay: 0.3s;
+  }
+
+  .idle :global(.spot:nth-of-type(3)) {
+    animation-delay: 0.6s;
+  }
+
+  .idle :global(.spot:nth-of-type(4)) {
+    animation-delay: 0.9s;
+  }
+
+  @keyframes beckon {
+    50% {
+      stroke-opacity: 0.55;
+      fill-opacity: 0.06;
+    }
+  }
+
+  .stage :global(#keep rect) {
+    transition: fill-opacity 0.2s;
+  }
+
+  .stage :global(#keep:hover rect) {
+    fill-opacity: 1;
+  }
+
+  .stage :global(#keep.done) {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .stage :global(#answer text) {
+    transition: opacity 0.25s;
+  }
+
+  .stage :global(#answer .gone) {
+    opacity: 0;
+  }
+
+  .stage :global(.kept) {
+    animation: settle 0.35s ease-out both;
+  }
+
+  @keyframes settle {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* LecNote: the switch and what it does to the page */
+  .stage :global(#knob) {
+    transition: transform 0.35s cubic-bezier(0.3, 0.8, 0.3, 1);
+  }
+
+  .stage :global(.push #knob) {
+    transform: translateX(78px);
+  }
+
+  .stage :global(#lbl-ask),
+  .stage :global(#lbl-push) {
+    transition: fill 0.3s;
+  }
+
+  .stage :global(.ask) {
+    transition: opacity 0.35s;
+  }
+
+  .stage :global(.push .ask) {
+    opacity: 0;
+  }
+
+  .stage :global(#hand) {
+    transition: opacity 0.6s;
+  }
+
+  .stage :global(.push #hand) {
+    opacity: 0.45;
+  }
+
+  .stage :global(.drop) {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: drop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+  }
+
+  .stage :global(.lift) {
+    animation: lift 0.3s ease-in both;
+  }
+
+  @keyframes drop {
+    from {
+      opacity: 0;
+      transform: translateY(-36px) scale(0.96);
+    }
+  }
+
+  @keyframes lift {
+    to {
+      opacity: 0;
+      transform: translateY(-14px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stage :global(*) {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+
+  /* Narrow screens: the drawing on top, the steps below. */
+  @media (max-width: 760px) {
+    .flat-box {
+      padding: 12px;
+    }
+
+    .panel {
+      grid-template-columns: minmax(0, 1fr);
+      width: calc(100vw - 24px);
+      height: auto;
+      max-height: calc(100dvh - 60px);
+      overflow-y: auto;
+    }
+
+    .stage {
+      aspect-ratio: 4 / 3;
+    }
+
+    aside {
+      overflow: visible;
+      padding: 18px 16px 18px;
+      border-left: 0;
+      border-top: 1px solid var(--rule);
+    }
+
+    .eyebrow {
+      margin-bottom: 14px;
+    }
+
+    .steps {
+      gap: 16px;
+    }
+
+    .steps li:not(:last-child)::after {
+      display: none;
+    }
+
+    .steps button {
+      grid-template-columns: 36px 1fr;
+      column-gap: 12px;
+    }
+
+    .icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+    }
+
+    .icon svg {
+      width: 26px;
+      height: 26px;
+    }
+
+    .name {
+      font-size: 14.5px;
+    }
+
+    .text {
+      font-size: 13px;
+    }
+
+    .note,
+    .finding {
+      margin-top: 18px;
+    }
+
+    .hint {
+      left: 12px;
+      bottom: 10px;
+      font-size: 10.5px;
+    }
+  }
+</style>

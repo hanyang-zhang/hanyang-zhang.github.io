@@ -181,7 +181,7 @@ type Tag = { label: string; kind: 'target' | 'venue' | 'type' | 'score' | 'award
 // Research entries take the same optional `image` and `focus` as projects below.
 // `scene` opens an interactive 3D view instead of the picture (see WagerScene.astro
 // and TreellisScene.astro).
-export const research: { title: string; when: string; tags: Tag[]; summary: string; image?: string; focus?: string; scene?: 'wager' | 'treellis' }[] = [
+export const research: { title: string; when: string; tags: Tag[]; summary: string; image?: string; focus?: string; scene?: 'wager' | 'treellis' | 'pelita' | 'lecnote' }[] = [
   {
     title: 'AI Art Wagers in Chinese Online Art Communities',
     when: '2026 —',
@@ -198,6 +198,7 @@ export const research: { title: string; when: string; tags: Tag[]; summary: stri
     tags: [{ label: 'Targeting DIS ’27', kind: 'target' }],
     image: '/research/pelita.svg',
     focus: 'center',
+    scene: 'pelita',
     summary:
       'A web-based learning platform that weaves course materials, contextual AI help, and learners’ own notes together. Currently deployed in a real university course.',
   },
@@ -210,6 +211,7 @@ export const research: { title: string; when: string; tags: Tag[]; summary: stri
     ],
     image: '/research/lecnote.svg',
     focus: 'center',
+    scene: 'lecnote',
     summary:
       'I built LecNote, a full-stack platform whose AI help is grounded in selected slide regions, and ran a within-subjects study (N = 12) comparing learner-initiated and system-initiated assistance.',
   },
@@ -252,6 +254,29 @@ export const treellisSteps = [
   { title: 'Tweak by hand', text: 'You select the fins and drag a slider. Only that part moves.' },
   { title: 'Ask AI about one part', text: 'You point the model at the Engine. It edits that branch and leaves the rest.' },
 ];
+
+// The words beside the flat, clickable pictures of Pelita and LecNote (see FlatScene.astro).
+export const flatScenes = {
+  pelita: {
+    eyebrow: 'How Pelita helps',
+    hint: 'Click any part of the slide',
+    steps: [
+      { title: 'Point', text: 'Drag a box around any part of a slide: a diagram, a list, a photo.' },
+      { title: 'Explain', text: 'Pelita explains just that part, checking this week’s slides before it answers.' },
+      { title: 'Keep', text: 'Save what helps to your notes, then put it in your own words.' },
+    ],
+    note: 'Deployed in a University of Sydney course since July 2026.',
+  },
+  lecnote: {
+    eyebrow: 'Two ways to help in a live lecture',
+    hint: 'Flip the switch',
+    steps: [
+      { title: 'You ask', text: 'The learner boxes part of the live slide. LecNote adds one short hint about that region, and the notes stay theirs.' },
+      { title: 'AI pushes', text: 'The system decides when to help: summaries arrive as the slides move on and pile onto the page.' },
+    ],
+    finding: 'In a within-subjects study (N = 12), comprehension was lower after the AI pushed, mostly on open-ended questions.',
+  },
+};
 
 // Optional per project: `image` (a preview in public/, e.g. '/projects/treemap.png',
 // opens full size when clicked), `focus` (which part the small preview keeps, as

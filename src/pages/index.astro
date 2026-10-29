@@ -4,6 +4,7 @@ import Meadow from '../components/Meadow.astro';
 import Explainer from '../components/Explainer.astro';
 import WagerScene from '../components/WagerScene.astro';
 import TreellisScene from '../components/TreellisScene.astro';
+import FlatScene from '../components/FlatScene.astro';
 import {
   profile,
   hiddenSections,
@@ -20,6 +21,8 @@ import {
 
 const wagerEntry = research.find((r) => r.scene === 'wager');
 const treellisEntry = research.find((r) => r.scene === 'treellis');
+const pelitaEntry = research.find((r) => r.scene === 'pelita');
+const lecnoteEntry = research.find((r) => r.scene === 'lecnote');
 
 // Split bio text around glossary terms so they can open their explainer.
 const termPattern = new RegExp(`(${Object.keys(explainers).join('|')})`);
@@ -161,7 +164,7 @@ const pendingLine =
           research.map((r) => (
             <article class:list={['entry', { 'has-image': r.image }]}>
               {r.image && (r.scene ? (
-                <button class="thumb" type="button" data-scene={r.scene} aria-label={`Open an interactive 3D view of ${r.title}`}>
+                <button class="thumb" type="button" data-scene={r.scene} aria-label={`Open an interactive view of ${r.title}`}>
                   <img src={r.image} alt="" loading="lazy" style={r.focus && `object-position: ${r.focus}`} />
                 </button>
               ) : (
@@ -317,6 +320,8 @@ const pendingLine =
   </dialog>
   {wagerEntry && <WagerScene title={wagerEntry.title} />}
   {treellisEntry && <TreellisScene title={treellisEntry.title} />}
+  {pelitaEntry && <FlatScene scene="pelita" title={pelitaEntry.title} />}
+  {lecnoteEntry && <FlatScene scene="lecnote" title={lecnoteEntry.title} />}
 </Base>
 
 <script>
