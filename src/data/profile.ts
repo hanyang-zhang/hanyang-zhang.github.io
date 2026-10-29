@@ -14,7 +14,7 @@ export const profile = {
   timezone: 'Australia/Sydney',
   tagline: 'I study how people and AI make things together — and how AI can support people without taking over.',
   bio: [
-    'I’m a Master of Computer Science student at the University of Sydney, working with Prof. Eduardo Velloso. My research sits in Human–Computer Interaction, with a focus on human–AI co-creation and social computing.',
+    'I’m a Master of Computer Science student at the University of Sydney, supervised by Prof. Eduardo Velloso. My research sits in Human–Computer Interaction, with a focus on human–AI co-creation and social computing.',
     'I design and build systems, then study them with people: in live lectures, in creative communities online, and in the tools in between. Before Sydney, I studied Printing Engineering at Xi’an University of Technology and worked as a research assistant on LLM tools for power-system engineers.',
   ],
   interests: [
