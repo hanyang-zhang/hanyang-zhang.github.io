@@ -1,0 +1,702 @@
+---
+// The Treellis research picture, opened large: the structure tree, the 3D viewport and
+// the parameter panel side by side, as in Treellis, with the prompt across the bottom.
+// On open it plays the three steps once; the forest is held still while it's open, and
+// the scene is only loaded on first open.
+import { treellisSteps } from '../data/profile';
+
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+
+<dialog class="treellis-box" aria-label={title}>
+  <figure>
+    <div class="panel">
+      <section class="tree">
+        <p class="eyebrow">Structure tree</p>
+        <svg class="tree-svg" aria-label="Structure tree of the rocket"></svg>
+        <p class="legend"><span><b class="ai">✦ AI</b> made by the model</span><span><b class="you">YOU</b> changed by hand</span></p>
+      </section>
+      <section class="view">
+        <canvas></canvas>
+        <p class="eyebrow">Viewport</p>
+      </section>
+      <section class="ask">
+        <div class="prompt"><span class="who">You</span><span class="chip"></span><span class="text"></span><span class="go">Generate</span></div>
+      </section>
+      <section class="side">
+        <p class="eyebrow">Parameter panel</p>
+        <div class="params"></div>
+        <ol class="steps">
+          {
+            treellisSteps.map((s, i) => (
+              <li>
+                <button type="button">
+                  <span class="n">{String(i + 1).padStart(2, '0')}</span>
+                  <b>{s.title}</b>
+                  <small>{s.text}</small>
+                </button>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+      <button class="close" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+    <figcaption>{title}</figcaption>
+  </figure>
+</dialog>
+
+<script>
+  import type { TreellisScene } from '../scripts/treellis/scene';
+
+  const box = document.querySelector<HTMLDialogElement>('.treellis-box');
+  if (box) {
+    const panel = box.querySelector<HTMLElement>('.panel')!;
+    const view = box.querySelector<HTMLElement>('.view')!;
+    const buttons = [...box.querySelectorAll<HTMLButtonElement>('.steps button')];
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let scene: TreellisScene | null = null;
+    let opening = 0; // bumps on every open and close, so a slow load can tell it's stale
+
+    const mark = (n: number) =>
+      buttons.forEach((b, i) => {
+        b.classList.toggle('on', i + 1 === n);
+        b.setAttribute('aria-current', i + 1 === n ? 'step' : 'false');
+      });
+
+    async function open() {
+      const ticket = ++opening;
+      mark(calm ? 0 : 1);
+      box!.showModal();
+      window.dispatchEvent(new Event('meadowpause'));
+      // Each opening draws on its own canvas, so a load that's abandoned can't share a
+      // WebGL context with the one that replaced it.
+      const canvas = document.createElement('canvas');
+      view.querySelector('canvas')!.replaceWith(canvas);
+      const { mountTreellis } = await import('../scripts/treellis/scene');
+      if (ticket !== opening) return;
+      scene = mountTreellis(panel, canvas, { still: calm, onStep: mark });
+      if (calm) return;
+      // Play 1 → 3 once; anything the visitor does along the way stops the tour.
+      for (const n of [1, 2, 3]) {
+        if (ticket !== opening || !(await scene.play(n))) return;
+        await new Promise((r) => setTimeout(r, 1100));
+      }
+    }
+
+    document.querySelectorAll<HTMLButtonElement>('.thumb[data-scene="treellis"]').forEach((b) => b.addEventListener('click', open));
+    buttons.forEach((b, i) => b.addEventListener('click', () => scene?.play(i + 1)));
+    box.querySelector('.close')!.addEventListener('click', () => box.close());
+    box.addEventListener('click', (e) => {
+      if (!panel.contains(e.target as Node)) box.close();
+    });
+    box.addEventListener('close', () => {
+      opening++;
+      scene?.dispose();
+      scene = null;
+      window.dispatchEvent(new Event('meadowresume'));
+    });
+    window.addEventListener('themechange', () => scene?.setTheme());
+  }
+</script>
+
+<style is:global>
+  /* The tree and the panel are drawn by script, so these styles are global, kept
+     inside the dialog. */
+  .treellis-box {
+    --hl: #f0c35c;
+    --ai: #2f7d6d;
+    --you: #9a6a3a;
+    --group: #e4ead6;
+    --edge: #c9d4b8;
+    max-width: none;
+    max-height: none;
+    width: 100vw;
+    height: 100dvh;
+    margin: 0;
+    padding: 24px;
+    border: 0;
+    background: transparent;
+    opacity: 0;
+    transition:
+      opacity 0.25s ease,
+      overlay 0.25s allow-discrete,
+      display 0.25s allow-discrete;
+  }
+
+  :root[data-theme='dark'] .treellis-box {
+    --ai: #7cc4b2;
+    --you: #d9a56b;
+    --group: #1b2a21;
+    --edge: #2c3d33;
+  }
+
+  .treellis-box[open] {
+    display: grid;
+    place-items: center;
+    opacity: 1;
+  }
+
+  @starting-style {
+    .treellis-box[open] {
+      opacity: 0;
+    }
+  }
+
+  .treellis-box::backdrop {
+    background: rgb(8 20 12 / 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .treellis-box figure {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    margin: 0;
+  }
+
+  .treellis-box figcaption {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+    color: rgb(255 255 255 / 0.75);
+  }
+
+  .treellis-box .panel {
+    position: relative;
+    display: grid;
+    grid-template-columns: 4fr 3.5fr 2.5fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: 'tree view side' 'ask ask side';
+    width: min(1100px, calc(100vw - 48px));
+    height: min(640px, calc(100dvh - 90px));
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--paper);
+    color: var(--ink);
+    font: 15px/1.4 var(--sans);
+    box-shadow: 0 20px 60px -10px rgb(0 0 0 / 0.5);
+  }
+
+  .treellis-box section {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    padding: 18px;
+  }
+
+  .treellis-box .tree {
+    grid-area: tree;
+  }
+
+  .treellis-box .view {
+    grid-area: view;
+    padding: 0;
+    border-left: 1px solid var(--rule);
+  }
+
+  .treellis-box .side {
+    grid-area: side;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--rule);
+  }
+
+  .treellis-box .ask {
+    grid-area: ask;
+    padding: 12px 16px 14px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .treellis-box .eyebrow {
+    margin: 0 0 10px;
+    font: 12px var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .treellis-box .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-3);
+    cursor: pointer;
+  }
+
+  .treellis-box .close:hover {
+    background: color-mix(in srgb, var(--ink) 7%, transparent);
+    color: var(--ink);
+  }
+
+  .treellis-box .close svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+
+  /* ---- structure tree ---- */
+  .treellis-box .tree-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .treellis-box .edge {
+    fill: none;
+    stroke: var(--edge);
+    stroke-width: 1.6;
+  }
+
+  .treellis-box .tnode {
+    cursor: pointer;
+  }
+
+  .treellis-box .tnode.fresh {
+    animation: treellis-fade 0.4s ease-out both;
+  }
+
+  @keyframes treellis-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .treellis-box .tnode .shape {
+    fill: var(--c);
+    stroke: var(--ink);
+    stroke-width: 1.3;
+    stroke-linejoin: round;
+    transition: fill 0.15s;
+  }
+
+  .treellis-box .tnode.on .shape {
+    fill: var(--hl);
+  }
+
+  .treellis-box .tnode.sel .shape {
+    stroke-width: 2.5;
+  }
+
+  .treellis-box .tnode .nm {
+    font: 600 14.5px var(--sans);
+    fill: var(--ink);
+  }
+
+  .treellis-box .tnode .kd {
+    font: 11px var(--sans);
+    fill: var(--ink-2);
+  }
+
+  .treellis-box .tnode.on .nm,
+  .treellis-box .tnode.on .kd {
+    fill: #1b2a1f;
+  }
+
+  .treellis-box .tnode .glyph > * {
+    fill: var(--ink-3);
+    stroke: var(--ink);
+    stroke-width: 0.8;
+  }
+
+  .treellis-box .tnode .by {
+    font: 600 11px var(--mono);
+    fill: var(--ai);
+  }
+
+  .treellis-box .tnode .by.you {
+    fill: var(--you);
+  }
+
+  .treellis-box .scope {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.3;
+    stroke-dasharray: 4 4;
+  }
+
+  /* actions beside the selected node, as in Treellis: delete, add a child, ask the model */
+  .treellis-box .act {
+    cursor: pointer;
+  }
+
+  .treellis-box .act circle {
+    fill: var(--paper);
+    stroke: var(--ink);
+    stroke-width: 1.2;
+    transition: fill 0.15s;
+  }
+
+  .treellis-box .act text {
+    font: 700 14px var(--sans);
+    text-anchor: middle;
+  }
+
+  .treellis-box .act.del text {
+    fill: #c0503a;
+  }
+
+  .treellis-box .act.add text,
+  .treellis-box .act.ai text {
+    fill: var(--ai);
+  }
+
+  .treellis-box .act.ai text {
+    font-size: 13px;
+  }
+
+  .treellis-box .act:hover circle,
+  .treellis-box .act.press circle {
+    fill: var(--hl);
+  }
+
+  .treellis-box .legend {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+
+  .treellis-box .legend b {
+    font: 600 12px var(--mono);
+  }
+
+  .treellis-box .legend .ai {
+    color: var(--ai);
+  }
+
+  .treellis-box .legend .you {
+    color: var(--you);
+  }
+
+  /* ---- viewport ---- */
+  .treellis-box .view .eyebrow {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    margin: 0;
+    pointer-events: none;
+  }
+
+  .treellis-box .view canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    touch-action: none;
+  }
+
+  .treellis-box .view canvas:active {
+    cursor: grabbing;
+  }
+
+  /* ---- the prompt, across the tree and the viewport ---- */
+  .treellis-box .prompt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 8px 8px 16px;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgb(20 40 10 / 0.08);
+  }
+
+  .treellis-box .prompt .who {
+    font: 12px var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--you);
+  }
+
+  .treellis-box .prompt .chip {
+    padding: 3px 8px;
+    border-radius: 7px;
+    font: 13px var(--mono);
+    white-space: nowrap;
+    color: #1b2a1f;
+    background: color-mix(in srgb, var(--hl) 60%, transparent);
+  }
+
+  .treellis-box .prompt .chip:empty {
+    display: none;
+  }
+
+  .treellis-box .prompt .text {
+    flex: 1;
+    min-width: 0;
+    min-height: 22px;
+    overflow: hidden;
+    font-size: 16px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .treellis-box .prompt .text:empty::before {
+    content: 'Describe what to make, or pick a node and ask about it…';
+    color: var(--ink-3);
+  }
+
+  .treellis-box .prompt .go {
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .treellis-box .prompt.busy .go {
+    background: var(--ai);
+    color: #fff;
+    animation: treellis-pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes treellis-pulse {
+    50% {
+      opacity: 0.55;
+    }
+  }
+
+  /* ---- parameter panel and the steps ---- */
+  .treellis-box .params {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    margin: 0 -18px;
+    padding: 0 18px;
+    scrollbar-width: thin;
+  }
+
+  .treellis-box .hint {
+    margin: 0;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+
+  .treellis-box .phead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .treellis-box .phead svg {
+    flex: none;
+    width: 19px;
+    height: 21px;
+  }
+
+  .treellis-box .phead polygon {
+    fill: var(--c);
+    stroke: var(--ink);
+    stroke-width: 1.6;
+  }
+
+  .treellis-box .phead input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-bottom: 1px dashed transparent;
+    font: 600 19px var(--sans);
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    background: none;
+  }
+
+  .treellis-box .phead input:hover,
+  .treellis-box .phead input:focus {
+    border-bottom-color: var(--ink-3);
+    outline: none;
+  }
+
+  .treellis-box .pby {
+    padding: 2px 7px;
+    border-radius: 99px;
+    font: 600 11px var(--mono);
+    white-space: nowrap;
+    color: var(--ai);
+    background: color-mix(in srgb, var(--ai) 14%, transparent);
+  }
+
+  .treellis-box .pby.you {
+    color: var(--you);
+    background: color-mix(in srgb, var(--you) 16%, transparent);
+  }
+
+  .treellis-box .pkind {
+    margin: 2px 0 8px;
+    font: 12px var(--mono);
+    color: var(--ink-3);
+  }
+
+  .treellis-box .group-h {
+    margin: 10px 0 2px;
+    font: 11px var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .treellis-box .param {
+    display: grid;
+    grid-template-columns: 96px 1fr 38px;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+
+  .treellis-box .param > span:first-child {
+    font: 12px var(--mono);
+    white-space: nowrap;
+    color: var(--ink-2);
+  }
+
+  .treellis-box .param output {
+    font: 12px var(--mono);
+    text-align: right;
+  }
+
+  .treellis-box .param input[type='range'] {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    accent-color: var(--you);
+  }
+
+  .treellis-box .param input[type='color'] {
+    width: 34px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid var(--ink);
+    border-radius: 5px;
+    background: none;
+    cursor: pointer;
+  }
+
+  .treellis-box .steps {
+    margin: 10px 0 0;
+    padding: 10px 0 0;
+    list-style: none;
+    border-top: 1px solid var(--rule);
+  }
+
+  .treellis-box .steps button {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 0 8px;
+    width: 100%;
+    padding: 5px 6px;
+    border: 0;
+    border-radius: 8px;
+    font: inherit;
+    text-align: left;
+    color: var(--ink-3);
+    background: none;
+    cursor: pointer;
+  }
+
+  .treellis-box .steps button:hover {
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+  }
+
+  .treellis-box .steps .n {
+    font: 12px/22px var(--mono);
+  }
+
+  .treellis-box .steps b {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .treellis-box .steps small {
+    grid-column: 2;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .treellis-box .steps button.on {
+    color: var(--ink);
+  }
+
+  .treellis-box .steps button.on .n {
+    color: var(--accent);
+  }
+
+  .treellis-box .steps button:not(.on) small {
+    display: none;
+  }
+
+  /* Phones: the viewport and the prompt first, then the tree, then the panel. */
+  @media (max-width: 760px) {
+    .treellis-box {
+      padding: 12px;
+      overflow: auto;
+    }
+
+    .treellis-box[open] {
+      place-items: start center;
+    }
+
+    .treellis-box .panel {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto;
+      grid-template-areas: 'view' 'ask' 'tree' 'side';
+      width: calc(100vw - 24px);
+      height: auto;
+    }
+
+    .treellis-box .view {
+      aspect-ratio: 4 / 5;
+      max-height: calc(100dvh - 280px);
+      border-left: 0;
+    }
+
+    .treellis-box .tree,
+    .treellis-box .side {
+      border-left: 0;
+      border-top: 1px solid var(--rule);
+    }
+
+    .treellis-box .ask {
+      border-top: 0;
+    }
+
+    .treellis-box .params {
+      overflow: visible;
+    }
+
+    .treellis-box .legend {
+      position: static;
+      margin-top: 10px;
+    }
+  }
+</style>

@@ -179,8 +179,9 @@ export const publications = [
 type Tag = { label: string; kind: 'target' | 'venue' | 'type' | 'score' | 'award' };
 
 // Research entries take the same optional `image` and `focus` as projects below.
-// `scene` opens an interactive 3D view instead of the picture (see WagerScene.astro).
-export const research: { title: string; when: string; tags: Tag[]; summary: string; image?: string; focus?: string; scene?: 'wager' }[] = [
+// `scene` opens an interactive 3D view instead of the picture (see WagerScene.astro
+// and TreellisScene.astro).
+export const research: { title: string; when: string; tags: Tag[]; summary: string; image?: string; focus?: string; scene?: 'wager' | 'treellis' }[] = [
   {
     title: 'AI Art Wagers in Chinese Online Art Communities',
     when: '2026 —',
@@ -219,8 +220,8 @@ export const research: { title: string; when: string; tags: Tag[]; summary: stri
       { label: 'UIST ’26', kind: 'venue' },
       { label: 'Best Paper Award', kind: 'award' },
     ],
-    image: '/research/treellis.svg',
-    focus: 'center',
+    image: '/research/treellis.jpg',
+    scene: 'treellis',
     summary:
       'A system for progressively editing AI-generated 3D models. I contributed to parts of the implementation and the appendix, acknowledged in the paper.',
   },
@@ -243,6 +244,13 @@ export const wagerStages = [
   { title: 'Livestream', text: 'The creator draws live; files go to an intermediary.' },
   { title: 'Adjudication', text: 'Eligible viewers vote: AI or not.' },
   { title: 'Closure', text: 'The stake moves; apologies, deletions and replies follow.' },
+];
+
+// The three steps beside the Treellis scene: how a person and the model share the work.
+export const treellisSteps = [
+  { title: 'Prompt', text: 'You describe it; the model returns the rocket as parts, with their tree.' },
+  { title: 'Tweak by hand', text: 'You select the fins and drag a slider. Only that part moves.' },
+  { title: 'Ask AI about one part', text: 'You point the model at the Engine. It edits that branch and leaves the rest.' },
 ];
 
 // Optional per project: `image` (a preview in public/, e.g. '/projects/treemap.png',

@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Meadow from '../components/Meadow.astro';
 import Explainer from '../components/Explainer.astro';
 import WagerScene from '../components/WagerScene.astro';
+import TreellisScene from '../components/TreellisScene.astro';
 import {
   profile,
   hiddenSections,
@@ -18,6 +19,7 @@ import {
 } from '../data/profile';
 
 const wagerEntry = research.find((r) => r.scene === 'wager');
+const treellisEntry = research.find((r) => r.scene === 'treellis');
 
 // Split bio text around glossary terms so they can open their explainer.
 const termPattern = new RegExp(`(${Object.keys(explainers).join('|')})`);
@@ -314,6 +316,7 @@ const pendingLine =
     </figure>
   </dialog>
   {wagerEntry && <WagerScene title={wagerEntry.title} />}
+  {treellisEntry && <TreellisScene title={treellisEntry.title} />}
 </Base>
 
 <script>
