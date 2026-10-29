@@ -21,9 +21,12 @@ const navItems = sections.filter((s) => ['research', 'publications', 'projects',
 
   <main class="sheet">
     <header class="top">
-      <a class="mark" href="#top" aria-label="Back to top">hz</a>
+      <a class="mark" href="#top" aria-label="Back to top">
+        <span class="mark-short" aria-hidden="true">hz</span>
+        <span class="mark-full" aria-hidden="true">{profile.name}</span>
+      </a>
       <nav aria-label="Sections">
-        {navItems.map((s) => <a href={`#${s.id}`}>{s.label}</a>)}
+        {navItems.map((s) => <a href={`#${s.id}`} data-section={s.id}>{s.label}</a>)}
       </nav>
       <button class="theme" type="button" aria-label="Toggle day and night">
         <svg class="sun" viewBox="0 0 24 24" aria-hidden="true">
@@ -37,13 +40,7 @@ const navItems = sections.filter((s) => ['research', 'publications', 'projects',
     </header>
 
     <section class="hero" id="top">
-      <p class="status"><span class="dot" aria-hidden="true"></span>{profile.status}</p>
-      <h1>
-        {profile.name}
-        <span class="lede" aria-label={profile.lede.join(' ')}>
-          {profile.lede.map((line, i) => <span class:list={['line', { indent: i % 2 === 0 }]}>{line}</span>)}
-        </span>
-      </h1>
+      <h1>{profile.name}</h1>
 
       <dl class="facts">
         <div>
@@ -245,6 +242,40 @@ const navItems = sections.filter((s) => ['research', 'publications', 'projects',
     { rootMargin: '0px 0px -8% 0px' },
   );
   document.querySelectorAll('.block').forEach((el) => io.observe(el));
+
+  // Sticky header: frost it once it's pinned, show the full name once the
+  // headline is gone, and mark the nav link for the section being read.
+  const top = document.querySelector<HTMLElement>('.top');
+  const sheet = document.querySelector<HTMLElement>('.sheet');
+  const headline = document.querySelector<HTMLElement>('h1');
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('nav a[data-section]')];
+  const sections = [...document.querySelectorAll<HTMLElement>('main section[id]')];
+  let queued = false;
+  function updateHeader() {
+    queued = false;
+    if (!top || !sheet || !headline) return;
+    top.classList.toggle('stuck', sheet.getBoundingClientRect().top < 0);
+    top.classList.toggle('named', headline.getBoundingClientRect().bottom < top.offsetHeight);
+
+    const line = innerHeight * 0.35;
+    const atBottom = innerHeight + scrollY >= document.documentElement.scrollHeight - 4;
+    let current = '';
+    for (const s of sections) if (s.getBoundingClientRect().top <= line) current = s.id;
+    if (atBottom) current = sections[sections.length - 1]?.id ?? current;
+    for (const a of links) a.setAttribute('aria-current', String(a.dataset.section === current));
+  }
+  addEventListener(
+    'scroll',
+    () => {
+      if (!queued) {
+        queued = true;
+        requestAnimationFrame(updateHeader);
+      }
+    },
+    { passive: true },
+  );
+  addEventListener('resize', updateHeader);
+  updateHeader();
 </script>
 
 <style>
@@ -252,9 +283,10 @@ const navItems = sections.filter((s) => ['research', 'publications', 'projects',
      meadow. It's a pane of frosted glass: the grass shows through, softly. */
   .sheet {
     position: relative;
+    --pad-x: clamp(40px, 5vw, 80px);
     width: clamp(680px, 58vw, 980px);
     margin: 28px auto;
-    padding: 28px clamp(40px, 5vw, 80px) 40px;
+    padding: 8px var(--pad-x) 40px;
     border-radius: 22px;
     background: color-mix(in srgb, var(--paper) 82%, transparent);
     -webkit-backdrop-filter: blur(24px) saturate(1.4);
@@ -299,15 +331,51 @@ const navItems = sections.filter((s) => ['research', 'publications', 'projects',
   }
 
   /* ---------- Top bar ---------- */
+  /* Sticks to the top of the window while scrolling. Once stuck it spans the
+     card edge to edge on frosted glass, so text scrolling under it blurs away. */
   .top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     display: flex;
     align-items: center;
     gap: 24px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--rule);
+    margin: 0 calc(var(--pad-x) * -1);
+    padding: 20px var(--pad-x) 18px;
+    border-radius: 22px 22px 0 0;
+    transition:
+      background-color 0.4s ease,
+      border-radius 0.4s ease;
   }
 
+  .top::after {
+    content: '';
+    position: absolute;
+    left: var(--pad-x);
+    right: var(--pad-x);
+    bottom: 0;
+    height: 1px;
+    background: var(--rule);
+    transition:
+      left 0.4s ease,
+      right 0.4s ease;
+  }
+
+  .top.stuck {
+    border-radius: 0;
+    background-color: color-mix(in srgb, var(--paper) 70%, transparent);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    backdrop-filter: blur(14px) saturate(1.2);
+  }
+
+  .top.stuck::after {
+    left: 0;
+    right: 0;
+  }
+
+  /* "hz" becomes the full name once the big headline has scrolled away */
   .mark {
+    display: grid;
     font-weight: 500;
     font-size: 17px;
     letter-spacing: -0.02em;
@@ -317,6 +385,30 @@ const navItems = sections.filter((s) => ['research', 'publications', 'projects',
     margin-right: auto;
   }
 
+  .mark > span {
+    grid-area: 1 / 1;
+    white-space: nowrap;
+    transition:
+      opacity 0.35s ease,
+      transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .mark-full {
+    opacity: 0;
+    transform: translateY(6px);
+    color: var(--ink);
+  }
+
+  .top.named .mark-short {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  .top.named .mark-full {
+    opacity: 1;
+    transform: none;
+  }
+
   nav {
     display: flex;
     gap: 22px;
@@ -324,12 +416,32 @@ const navItems = sections.filter((s) => ['research', 'publications', 'projects',
   }
 
   nav a {
+    position: relative;
     color: var(--ink-2);
     text-decoration: none;
   }
 
-  nav a:hover {
+  nav a:hover,
+  nav a[aria-current='true'] {
     color: var(--ink);
+  }
+
+  /* a small dot marks the section you're reading */
+  nav a::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -9px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: translateX(-50%) scale(0);
+    transition: transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+
+  nav a[aria-current='true']::after {
+    transform: translateX(-50%) scale(1);
   }
 
   .theme {
@@ -383,61 +495,12 @@ const navItems = sections.filter((s) => ['research', 'publications', 'projects',
     padding: 72px 0 56px;
   }
 
-  .status {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0 0 28px;
-    font-family: var(--mono);
-    font-size: 11.5px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-
-  .dot {
-    position: relative;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-
-  .dot::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: currentColor;
-    animation: ping 2.4s ease-out infinite;
-  }
-
-  @keyframes ping {
-    to {
-      transform: scale(3);
-      opacity: 0;
-    }
-  }
-
   h1 {
     margin: 0;
     font-weight: 400;
     font-size: clamp(38px, 5.4vw, 76px);
     line-height: 1.08;
     letter-spacing: -0.035em;
-  }
-
-  .lede {
-    display: block;
-    color: color-mix(in srgb, var(--ink-2) 75%, var(--ink-3));
-  }
-
-  .line {
-    display: block;
-  }
-
-  .line.indent {
-    padding-left: 0.9em;
   }
 
   .facts {
@@ -473,6 +536,11 @@ const navItems = sections.filter((s) => ['research', 'publications', 'projects',
   }
 
   /* ---------- Sections ---------- */
+  .hero,
+  .block {
+    scroll-margin-top: 64px; /* clear the sticky header when jumping to a section */
+  }
+
   .block {
     display: grid;
     grid-template-columns: 160px minmax(0, 1fr);
@@ -721,18 +789,15 @@ const navItems = sections.filter((s) => ['research', 'publications', 'projects',
   @media (max-width: 760px) {
     .sheet {
       width: 100%;
+      --pad-x: 22px;
       margin: 38vh 0 0;
-      padding: 22px 22px 32px;
+      padding: 4px var(--pad-x) 32px;
       border-radius: 22px 22px 0 0;
       border-width: 1px 0 0;
     }
 
     .sheet::before {
       inset: -1px 0 0;
-    }
-
-    .line.indent {
-      padding-left: 0.6em;
     }
 
     nav {
