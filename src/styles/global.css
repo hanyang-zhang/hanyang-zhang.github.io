@@ -11,6 +11,8 @@
   --shadow:
     0 1px 2px rgb(20 40 10 / 0.08), 0 8px 24px -6px rgb(20 40 10 / 0.18), 0 40px 80px -20px rgb(20 40 10 / 0.35);
   --glass-edge: rgb(255 255 255 / 0.6);
+  /* sticky header: the card's own tone (paper over dark forest), not brighter paper */
+  --nav-bg: rgb(224 228 215 / 0.84);
 
   --sans: 'Inter', -apple-system, system-ui, 'Helvetica Neue', sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -30,6 +32,7 @@
   --meadow: #05110f;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 20px 60px -10px rgb(0 0 0 / 0.6);
   --glass-edge: rgb(255 255 255 / 0.07);
+  --nav-bg: rgb(15 23 19 / 0.7);
   color-scheme: dark;
 }
 

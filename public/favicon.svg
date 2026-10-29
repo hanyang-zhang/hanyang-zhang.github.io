@@ -1,4 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="16" fill="#2c5326"/>
-  <path d="M20 50c4-12 6-22 5-34M32 50c0-10 1-20 6-30M44 50c-2-9-1-17 3-24" stroke="#b4cf6e" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <rect width="64" height="64" rx="16" fill="#1f3a22"/>
+  <g transform="translate(8 8)" fill="none" stroke="#b9dd8a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 39C9 21 21 9 39 9C39 27 27 39 9 39Z"/>
+    <path d="M6 42L31 17M17 31H25M17 31V23M24 24H31M24 24V17"/>
+  </g>
 </svg>

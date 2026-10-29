@@ -1,8 +1,14 @@
 // All page content lives here. Add a news item, paper or project by editing
 // this file — the page templates never need to change.
 
+// Sections listed here are hidden from the page; their content below is kept.
+export const hiddenSections: string[] = ['news'];
+
 export const profile = {
   name: 'Hanyang Zhang',
+  // Portrait shown beside the name: put the file in `public/` (e.g. public/photo.jpg)
+  // and set this to '/photo.jpg'. Leave empty to show a placeholder.
+  photo: '/photo.jpg',
   location: 'Sydney, Australia',
   timezone: 'Australia/Sydney',
   tagline: 'I study how people and AI make things together — and how AI can support people without taking over.',
@@ -10,7 +16,15 @@ export const profile = {
     'I’m a Master of Computer Science student at the University of Sydney, working with Prof. Eduardo Velloso. My research sits in Human–Computer Interaction, with a focus on human–AI co-creation and social computing.',
     'I design and build systems, then study them with people: in live lectures, in creative communities online, and in the tools in between. Before Sydney, I studied Printing Engineering at Xi’an University of Technology and worked as a research assistant on LLM tools for power-system engineers.',
   ],
-  interests: ['Human–Computer Interaction', 'Human–AI Co-Creation', 'Social Computing', 'LLMs & MLLMs'],
+  interests: [
+    'Human–Computer Interaction',
+    'Human–AI Co-Creation',
+    'Social Computing',
+    'LLMs & MLLMs',
+    'Interdisciplinary Research',
+  ],
+  // interests drawn with a slightly stronger chip
+  highlightInterests: ['Interdisciplinary Research'],
   emails: [
     { label: 'Personal', address: 'hanyang.y.zhang@gmail.com' },
     { label: 'University', address: 'hzha0935@uni.sydney.edu.au' },
@@ -22,23 +36,30 @@ export const profile = {
 export const news = [
   { date: '2026', text: 'Treellis, a project I contributed to, received a Best Paper Award at UIST ’26.' },
   { date: 'Sep 2026', text: 'Started a new project on AI art wagers in Chinese online art communities.' },
-  { date: 'Jul 2026', text: 'Began deploying Pelita in COMP5047 Pervasive Computing at the University of Sydney.' },
+  { date: 'Jul 2026', text: 'Began deploying Pelita in a course at the University of Sydney.' },
   { date: 'Jul 2026', text: 'Wrapped up my master’s thesis on AI assistance in live lecture note-taking.' },
   { date: '2026', text: 'Awarded the Engineering Vacation Research Internship Program Scholarship.' },
 ];
 
+// While nothing is out yet, the page shows this note instead of a list, plus a
+// line counting the papers marked `hidden` that are under review.
+export const publicationsNote = 'Nothing published yet — but a few things are on their way. I’ll list them here as soon as they’re out.';
+
+// `hidden: true` keeps a paper off the page (e.g. while under double-blind review).
 export const publications = [
   {
     title: 'Routing by Geometry: Weak-to-Strong LLM Inference with MAGE',
     authors: ['Jiaxin Li', 'Lefan Lai', 'Yixiang Chen', 'Hanyang Zhang', 'Jinrong Fu', 'Piotr Koniusz', 'Xuming Hu'],
     venue: 'ICLR 2027',
     status: 'Under review',
+    hidden: true,
   },
   {
     title: 'Look Before You Compress: FORESIGHT for Training-Free Visual Token Compression',
     authors: ['Lefan Lai', 'Jiaxin Li', 'Yixiang Chen', 'Hanyang Zhang', 'Yue Feng', 'Enyu Liu', 'Mark Billinghurst', 'Burkhard C. Wünsche'],
     venue: 'AAAI 2027',
     status: 'Under review',
+    hidden: true,
   },
 ];
 
@@ -81,7 +102,9 @@ export const research = [
   },
 ];
 
-export const projects = [
+// Optional per project: `image` (a preview in public/, e.g. '/projects/treemap.png')
+// and `href` (where the title links to).
+export const projects: { title: string; kind: string; summary: string; image?: string; href?: string }[] = [
   {
     title: 'Campus Sound Identity',
     kind: 'Installation',
