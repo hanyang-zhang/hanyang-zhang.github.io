@@ -372,6 +372,8 @@ export function buildGrassWorld({ scene, shared, small, defines }: WorldContext,
   const night = toColors(opts.night);
   return {
     groundY: 0,
+    surfaceAt: () => 0.8, // the grass tips
+    wrap: { length: FIELD_L, near: NEAR_Z },
     applyPalette(t) {
       grassUniforms.uBase.value.lerpColors(day.base, night.base, t);
       grassUniforms.uTip.value.lerpColors(day.tip, night.tip, t);

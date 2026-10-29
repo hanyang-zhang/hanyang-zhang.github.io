@@ -261,6 +261,8 @@ export function buildVoxelWorld({ scene, shared, small }: WorldContext): World {
   const night = toColors(NIGHT);
   return {
     groundY: 2,
+    surfaceAt: () => 3,
+    wrap: { length: L, near: NEAR_Z },
     applyPalette(t) {
       shared.uFog.value.lerpColors(day.fog, night.fog, t);
       plantUniforms.uLight.value.lerpColors(day.plant, night.plant, t);

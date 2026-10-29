@@ -441,6 +441,8 @@ export function buildCanopyWorld({ scene, shared, small }: WorldContext): World 
   const night = toColors(NIGHT);
   return {
     groundY: 4,
+    surfaceAt: (x, z) => hill(x, z) + 4.2, // roughly the tops of the crowns
+    wrap: { length: L, near: NEAR },
     applyPalette(t) {
       canopyUniforms.uDeep.value.lerpColors(day.deep, night.deep, t);
       canopyUniforms.uMid.value.lerpColors(day.mid, night.mid, t);

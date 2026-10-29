@@ -17,7 +17,7 @@ export function sharedUniforms(night: number, pixelRatio: number) {
     uFogNear: { value: 12 },
     uFogFar: { value: 34 },
     uPixelRatio: { value: pixelRatio },
-    uGroundY: { value: 0 },
+    uWrap: { value: new THREE.Vector2(FIELD_L, NEAR_Z) }, // the world's scroll wrap: length, near edge
   };
 }
 export type Shared = ReturnType<typeof sharedUniforms>;
@@ -31,8 +31,12 @@ export interface WorldContext {
 
 /** A self-contained scene (grass meadow, voxel world, …) the engine can render. */
 export interface World {
-  /** Height of the walkable surface, used for the pointer and floating motes. */
+  /** Height of the walkable surface, used for the pointer. */
   groundY: number;
+  /** Height of the top of the scenery at (x, z): motes float just above it. */
+  surfaceAt?(x: number, z: number): number;
+  /** How the scenery wraps while scrolling: z spans [near - length, near]. */
+  wrap?: { length: number; near: number };
   /** Blend between day (0) and night (1); also sets `shared.uFog`. */
   applyPalette(t: number): void;
   update(time: number, scroll: number): void;

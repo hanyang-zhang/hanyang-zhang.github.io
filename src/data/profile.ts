@@ -6,6 +6,7 @@ export const hiddenSections: string[] = ['news'];
 
 export const profile = {
   name: 'Hanyang Zhang',
+  nickname: 'Yuki',
   // Portrait shown beside the name: put the file in `public/` (e.g. public/photo.jpg)
   // and set this to '/photo.jpg'. Leave empty to show a placeholder.
   photo: '/photo.jpg',
@@ -43,7 +44,7 @@ export const news = [
 
 // While nothing is out yet, the page shows this note instead of a list, plus a
 // line counting the papers marked `hidden` that are under review.
-export const publicationsNote = 'Nothing published yet — but a few things are on their way. I’ll list them here as soon as they’re out.';
+export const publicationsNote = 'Nothing published yet — but I’m working hard on it.';
 
 // `hidden: true` keeps a paper off the page (e.g. while under double-blind review).
 export const publications = [
@@ -63,40 +64,50 @@ export const publications = [
   },
 ];
 
-export const research = [
+// Each tag's `kind` picks its badge style: a conference it's aimed at
+// (`target`), one it appeared at (`venue`), what kind of work it is (`type`),
+// a grade (`score`), or an award (`award`).
+type Tag = { label: string; kind: 'target' | 'venue' | 'type' | 'score' | 'award' };
+
+export const research: { title: string; when: string; tags: Tag[]; summary: string }[] = [
   {
     title: 'AI Art Wagers in Chinese Online Art Communities',
     when: '2026 —',
-    venue: 'Targeting FAccT ’27',
+    tags: [{ label: 'Targeting FAccT ’27', kind: 'target' }],
     summary:
       'On Xiaohongshu, suspicions of AI use can escalate into public wagers with money on the line, drawing demonstrations, and negotiated judging rules. I trace how these challenges unfold — how people set rules, present evidence, and live with the outcome.',
   },
   {
     title: 'Pelita: AI Assistance Embedded in Course Materials',
     when: '2026 —',
-    venue: 'Targeting DIS ’27',
+    tags: [{ label: 'Targeting DIS ’27', kind: 'target' }],
     summary:
       'A web-based learning platform that weaves course materials, contextual AI help, and learners’ own notes together. Currently deployed in a real university course.',
   },
   {
     title: 'Supporting Without Taking Over: AI Assistance in Live Lecture Note-Taking',
     when: '2025 — 2026',
-    venue: 'Master’s thesis · 97/100',
+    tags: [
+      { label: 'Master’s thesis', kind: 'type' },
+      { label: '97/100', kind: 'score' },
+    ],
     summary:
       'I built LecNote, a full-stack platform whose AI help is grounded in selected slide regions, and ran a within-subjects study (N = 12) comparing learner-initiated and system-initiated assistance.',
   },
   {
     title: 'Treellis: Progressive Human–AI Co-Creation of 3D Models',
     when: '2026',
-    venue: 'UIST ’26',
-    award: 'Best Paper Award',
+    tags: [
+      { label: 'UIST ’26', kind: 'venue' },
+      { label: 'Best Paper Award', kind: 'award' },
+    ],
     summary:
       'A system for progressively editing AI-generated 3D models. I contributed to parts of the implementation and the appendix, acknowledged in the paper.',
   },
   {
     title: 'U²-SE-DIM: Deep Image Matting for Pre-Press',
     when: '2021 — 2022',
-    venue: 'Undergraduate thesis',
+    tags: [{ label: 'Undergraduate thesis', kind: 'type' }],
     summary:
       'An automatic matting framework combining U²-Net trimap generation with an attention-enhanced Deep Image Matting network.',
   },

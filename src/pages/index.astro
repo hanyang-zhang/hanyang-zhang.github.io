@@ -25,14 +25,14 @@ const sections = [
 ].filter((s) => !hiddenSections.includes(s.id));
 const shown = (id: string) => sections.some((s) => s.id === id);
 const num = (id: string) => String(sections.findIndex((s) => s.id === id) + 1).padStart(2, '0');
-const navItems = sections.filter((s) => ['research', 'publications', 'projects', 'contact'].includes(s.id));
+const navItems = sections.filter((s) => ['research', 'publications', 'projects', 'background', 'contact'].includes(s.id));
 
 const listedPapers = publications.filter((p) => !p.hidden);
 const pendingVenues = publications.filter((p) => p.hidden && p.status === 'Under review').map((p) => p.venue);
 const counts = ['No', 'One', 'Two', 'Three', 'Four', 'Five'];
 const pendingLine =
   pendingVenues.length > 0 &&
-  `${counts[pendingVenues.length] ?? pendingVenues.length} co-authored paper${pendingVenues.length > 1 ? 's are' : ' is'} out with reviewers right now — at ${new Intl.ListFormat('en', { type: 'conjunction' }).format(pendingVenues)}. Fingers crossed.`;
+  `${counts[pendingVenues.length] ?? pendingVenues.length} co-authored paper${pendingVenues.length > 1 ? 's are' : ' is'} out with reviewers right now — at ${new Intl.ListFormat('en', { type: 'conjunction' }).format(pendingVenues)}. Fingers crossed 🤞`;
 ---
 
 <Base title={profile.name} description={`${profile.name} — HCI researcher. ${profile.tagline}`}>
@@ -77,9 +77,12 @@ const pendingLine =
             )
           }
         </figure>
-        <h1>
-          <span class="hi">Hi, I’m</span>{' '}{profile.name}<span class="wave" aria-hidden="true">👋</span>
-        </h1>
+        <div class="greeting">
+          <h1>
+            <span class="hi">Hi, I’m</span>{' '}{profile.name}<span class="wave" aria-hidden="true">👋</span>
+          </h1>
+          {profile.nickname && <p class="aka">Some friends also call me {profile.nickname} :)</p>}
+        </div>
       </div>
 
       <dl class="facts">
@@ -129,9 +132,18 @@ const pendingLine =
           research.map((r) => (
             <article class="entry">
               <p class="meta">
-                <span>{r.when}</span>
-                <span>{r.venue}</span>
-                {r.award && <span class="award">✦ {r.award}</span>}
+                <span class="when">{r.when}</span>
+                {r.tags.map((t) => (
+                  <span class={`tag tag-${t.kind}`}>
+                    {t.kind === 'award' && (
+                      <svg class="trophy" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"></path>
+                        <path d="M7 6H5a2 2 0 0 0 0 4h2.4M17 6h2a2 2 0 0 1 0 4h-2.4M12 14v4M8 20h8"></path>
+                      </svg>
+                    )}
+                    {t.label}
+                  </span>
+                ))}
               </p>
               <h3>{r.title}</h3>
               <p>{r.summary}</p>
@@ -226,7 +238,7 @@ const pendingLine =
     <section class="block" id="contact">
       <h2><span>{num('contact')}</span>Contact</h2>
       <div class="body">
-        <p class="hello">Always happy to talk about people, AI, and the things they make together.</p>
+        <p class="hello">Always happy to talk about people, AI, and the things they make together :)</p>
         <ul class="emails">
           {
             profile.emails.map((e) => (
@@ -616,6 +628,21 @@ const pendingLine =
     color: var(--ink-3);
   }
 
+  /* hangs below the greeting without nudging it off-centre */
+  .greeting {
+    position: relative;
+  }
+
+  .aka {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin: 6px 0 0;
+    font-size: 15px;
+    white-space: nowrap;
+    color: var(--ink-3);
+  }
+
   /* the hand waves once on arrival, and again when you hover the greeting */
   .wave {
     display: inline-block;
@@ -781,12 +808,62 @@ const pendingLine =
   .meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px 14px;
-    margin: 0 0 6px;
+    align-items: center;
+    gap: 6px 8px;
+    margin: 0 0 8px;
   }
 
-  .award {
+  /* tags line up on the left; dates sit right-aligned at the end of the row,
+     like the dates in Background */
+  .meta .when {
+    order: 1;
+    margin-left: auto;
+  }
+
+  /* Badge style depends on what the tag says about the work. */
+  .tag {
+    padding: 2px 8px;
+    border-radius: 6px;
+    line-height: 1.5;
+    border: 1px solid transparent;
+  }
+
+  .tag-target {
+    border: 1px dashed color-mix(in srgb, var(--accent) 55%, transparent);
+    color: var(--accent);
+  }
+
+  .tag-venue {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .tag-type {
+    background: color-mix(in srgb, var(--ink) 7%, transparent);
+    color: var(--ink-2);
+  }
+
+  .tag-score {
+    border-color: var(--rule);
+    color: var(--ink-2);
+  }
+
+  .tag-award {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: color-mix(in srgb, var(--gold) 14%, transparent);
     color: var(--gold);
+  }
+
+  .trophy {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .pubs {
@@ -1020,6 +1097,11 @@ const pendingLine =
     .portrait {
       width: 68px;
       border-radius: 10px;
+    }
+
+    .aka {
+      font-size: 14px;
+      white-space: normal;
     }
 
     .facts {
