@@ -44,7 +44,7 @@ export const news = [
 
 // While nothing is out yet, the page shows this note instead of a list, plus a
 // line counting the papers marked `hidden` that are under review.
-export const publicationsNote = 'Nothing published yet — but I’m working hard on it.';
+export const publicationsNote = 'Nothing published yet🥲 but I’m working on it!';
 
 // `hidden: true` keeps a paper off the page (e.g. while under double-blind review).
 export const publications = [

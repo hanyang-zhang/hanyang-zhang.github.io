@@ -32,7 +32,7 @@ const pendingVenues = publications.filter((p) => p.hidden && p.status === 'Under
 const counts = ['No', 'One', 'Two', 'Three', 'Four', 'Five'];
 const pendingLine =
   pendingVenues.length > 0 &&
-  `${counts[pendingVenues.length] ?? pendingVenues.length} co-authored paper${pendingVenues.length > 1 ? 's are' : ' is'} out with reviewers right now — at ${new Intl.ListFormat('en', { type: 'conjunction' }).format(pendingVenues)}. Fingers crossed 🤞`;
+  `${counts[pendingVenues.length] ?? pendingVenues.length} co-authored paper${pendingVenues.length > 1 ? 's are' : ' is'} out with reviewers right now: at ${new Intl.ListFormat('en', { type: 'conjunction' }).format(pendingVenues)}. Fingers crossed🤞`;
 ---
 
 <Base title={profile.name} description={`${profile.name} — HCI researcher. ${profile.tagline}`}>
