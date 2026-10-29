@@ -1,0 +1,716 @@
+---
+import type { Explainer } from '../data/profile';
+import Thumb from './Thumb.astro';
+
+type Props = Explainer;
+const { id, title, aside, lede, badge, facets, bridge } = Astro.props;
+
+// The facets form a rosette of overlapping inks, in colour-wheel order so
+// neighbours overprint into each other; the field sits in the middle. The
+// facets closest to HCI sit on the left, where the eye lands first.
+const C = { x: 150, y: 84 };
+const angle: Record<string, number> = { m: -90, b: -30, c: 30, g: 90, y: 150, r: 210 };
+const petals = facets.map((f, i) => {
+  const a = (angle[f.ink] * Math.PI) / 180;
+  const cos = Math.cos(a);
+  return {
+    i,
+    ink: f.ink,
+    short: f.label,
+    cx: C.x + 24 * cos,
+    cy: C.y + 24 * Math.sin(a),
+    lx: C.x + 70 * cos,
+    ly: C.y + 68 * Math.sin(a),
+    anchor: cos > 0.3 ? 'start' : cos < -0.3 ? 'end' : 'middle',
+  };
+});
+---
+
+<div popover id={`ex-${id}`} class="explain" aria-labelledby={`ex-${id}-title`}>
+  <button class="close" popovertarget={`ex-${id}`} popovertargetaction="hide" aria-label="Close">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+  </button>
+
+  <p class="kicker">Glossary</p>
+  <h3 id={`ex-${id}-title`}>{title}</h3>
+  <p class="aside">{aside}</p>
+  <p class="lede">{lede}</p>
+  {badge && (
+    <a class="badge" href={badge.href} target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M5 2.5h6v3.2a3 3 0 0 1-6 0zM5 3.5H3v1a2 2 0 0 0 2 2M11 3.5h2v1a2 2 0 0 1-2 2M8 8.7v2.8M5.5 13.5h5" />
+      </svg>
+      <span><b>{badge.text}</b> · {badge.note}</span>
+      <span class="src">{badge.source} ↗</span>
+    </a>
+  )}
+
+  <svg class="venn" viewBox="0 0 300 168" role="img" aria-label={`Printing Engineering sits where ${facets.map((f) => f.label.toLowerCase()).join(', ')} overlap.`}>
+    {petals.map((p) => <circle class={`v v-${p.ink}`} data-i={p.i} cx={p.cx} cy={p.cy} r="34" />)}
+    {petals.map((p) => (
+      <text class={`vl vl-${p.ink}`} data-i={p.i} x={p.lx} y={p.ly} text-anchor={p.anchor} dominant-baseline="middle">
+        {p.short}
+      </text>
+    ))}
+    <g class="reg" transform={`translate(${C.x} ${C.y})`}>
+      <circle r="6" />
+      <path d="M-11 0h22M0 -11v22" />
+    </g>
+  </svg>
+
+  <ul class="facets">
+    {facets.map((f, i) => (
+      <li class={`f f-${f.ink}`} data-i={i} data-ink={f.ink} tabindex="0" role="button" aria-expanded="false">
+        <svg class="icon" viewBox="0 0 28 28" aria-hidden="true">
+          {f.icon === 'design' && (
+            <>
+              <path d="M6 22l7-16 7 16M8.6 16h8.8" />
+              <circle class="fill" cx="22.5" cy="7.5" r="3" />
+            </>
+          )}
+          {f.icon === 'software' && (
+            <>
+              <path d="M10 8l-6 6 6 6M18 8l6 6-6 6" />
+              <rect class="fill" x="12.8" y="9" width="2.6" height="10" rx="0.8" />
+            </>
+          )}
+          {f.icon === 'colour' && (
+            <>
+              <rect class="fill" x="5" y="6" width="8" height="16" rx="2" transform="rotate(-18 9 20)" />
+              <rect x="10" y="6" width="8" height="16" rx="2" />
+              <rect x="15" y="6" width="8" height="16" rx="2" transform="rotate(18 19 20)" />
+            </>
+          )}
+          {f.icon === 'hardware' && (
+            <>
+              <rect x="8" y="8" width="12" height="12" rx="2" />
+              <rect class="fill" x="11" y="11" width="6" height="6" rx="1" />
+              <path d="M11 4v4M17 4v4M11 20v4M17 20v4M4 11h4M4 17h4M20 11h4M20 17h4" />
+            </>
+          )}
+          {f.icon === 'machines' && (
+            <>
+              <circle class="fill" cx="10" cy="9" r="5" />
+              <circle cx="10" cy="19" r="5" />
+              <path d="M3 14h22M21 11l3 3-3 3" />
+            </>
+          )}
+          {f.icon === 'materials' && (
+            <>
+              <path class="fill" d="M14 4c-3 4.5-5.5 7.6-5.5 10.6a5.5 5.5 0 0 0 11 0C19.5 11.6 17 8.5 14 4z" />
+              <path d="M4 24h20" />
+            </>
+          )}
+        </svg>
+        <div>
+          <h4>{f.label}</h4>
+          <p>{f.text}</p>
+        </div>
+        <ul class="rows inline">
+          {f.items.map((it) => (
+            <li>
+              <span class="tile"><Thumb name={it.thumb} /></span>
+              {it.label}
+            </li>
+          ))}
+        </ul>
+      </li>
+    ))}
+  </ul>
+
+  <p class="bridge">
+    <span>{bridge.label}</span>
+    {bridge.highlight
+      ? bridge.text.split(bridge.highlight).flatMap((part, k) => (k ? [<mark>{bridge.highlight}</mark>, part] : [part]))
+      : bridge.text}
+  </p>
+
+  <!-- The open facet's pictures, beside the card on the facet's own side. A
+       manual popover inside the card, so clicks in it don't dismiss the card. -->
+  <div popover="manual" class="flyout">
+    {facets.map((f, i) => (
+      <section class={`group f-${f.ink}`} data-i={i}>
+        <span class="fl-label">{f.label}</span>
+        <ul class="rows">
+          {f.items.map((it) => (
+            <li>
+              <span class="tile"><Thumb name={it.thumb} /></span>
+              {it.label}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </div>
+</div>
+
+<script>
+  // Pin each explainer card next to the term that opened it, flipping above
+  // the term when there isn't room below, and follow it while scrolling.
+  const GAP = 10;
+  const EDGE = 14;
+
+  for (const pop of document.querySelectorAll<HTMLElement>('.explain')) {
+    const term = document.querySelector<HTMLElement>(`.term[popovertarget="${pop.id}"]`);
+    if (!term) continue;
+
+    const place = () => {
+      const t = term.getBoundingClientRect();
+      const w = pop.offsetWidth;
+      const h = pop.offsetHeight;
+      const left = Math.min(Math.max(EDGE, t.left + t.width / 2 - w / 2), innerWidth - w - EDGE);
+      const below = t.bottom + GAP;
+      const fitsBelow = below + h <= innerHeight - EDGE;
+      const fitsAbove = t.top - GAP - h >= EDGE;
+      const top = !fitsBelow && fitsAbove ? t.top - GAP - h : below;
+      pop.style.left = `${left}px`;
+      pop.style.top = `${Math.max(EDGE, top)}px`;
+      pop.dataset.side = top < t.top ? 'above' : 'below';
+    };
+
+    pop.addEventListener('beforetoggle', (e) => {
+      const open = (e as ToggleEvent).newState === 'open';
+      term.setAttribute('aria-expanded', String(open));
+      if (open) requestAnimationFrame(place);
+    });
+
+    // When the card fits neither below nor above, nudge the page up so it does.
+    const reveal = () => {
+      const overflow = pop.getBoundingClientRect().bottom - (innerHeight - EDGE);
+      if (overflow > 0) scrollBy({ top: overflow, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    };
+    // Facets: hovering previews one, clicking pins it open. Beside the card
+    // there's a flyout (left column opens left, right column right); when the
+    // screen has no room for it, the pictures unfold inside the facet instead.
+    const fly = pop.querySelector<HTMLElement>('.flyout')!;
+    const facets = [...pop.querySelectorAll<HTMLElement>('.f')];
+    const groups = [...fly.querySelectorAll<HTMLElement>('.group')];
+    let pinned = -1;
+    let hovered = -1;
+
+    const placeFly = (i: number) => {
+      const card = pop.getBoundingClientRect();
+      const f = facets[i].getBoundingClientRect();
+      const w = fly.offsetWidth;
+      const h = fly.offsetHeight;
+      const left = i % 2 ? card.right + GAP : card.left - GAP - w;
+      fly.style.left = `${left}px`;
+      fly.style.top = `${Math.min(Math.max(EDGE, f.top), innerHeight - h - EDGE)}px`;
+    };
+    const roomBeside = () => {
+      const card = pop.getBoundingClientRect();
+      const w = fly.offsetWidth || 230;
+      return card.left - GAP - w >= EDGE && card.right + GAP + w <= innerWidth - EDGE;
+    };
+
+    const show = () => {
+      const i = hovered >= 0 ? hovered : pinned;
+      const side = roomBeside();
+      pop.dataset.mode = side ? 'side' : 'inline';
+      pop.dataset.ink = i >= 0 ? facets[i].dataset.ink : '';
+      facets.forEach((f, k) => {
+        f.classList.toggle('on', k === i);
+        f.classList.toggle('pinned', k === pinned);
+        f.setAttribute('aria-expanded', String(k === pinned));
+      });
+      groups.forEach((g, k) => g.classList.toggle('on', k === i));
+      if (i < 0 || !side) {
+        if (fly.matches(':popover-open')) fly.hidePopover();
+        return;
+      }
+      if (!fly.matches(':popover-open')) fly.showPopover();
+      placeFly(i);
+    };
+
+    const pin = (i: number) => {
+      pinned = pinned === i ? -1 : i;
+      show();
+    };
+    facets.forEach((f, i) => {
+      f.addEventListener('pointerenter', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        hovered = i;
+        show();
+      });
+      f.addEventListener('pointerleave', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        hovered = -1;
+        show();
+      });
+      f.addEventListener('click', () => pin(i));
+      f.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        pin(i);
+      });
+    });
+    pop.querySelectorAll<SVGElement>('.venn [data-i]').forEach((el) => {
+      el.addEventListener('click', () => pin(Number(el.dataset.i)));
+    });
+
+    const follow = () => {
+      place();
+      const i = hovered >= 0 ? hovered : pinned;
+      if (i >= 0 && fly.matches(':popover-open')) placeFly(i);
+    };
+    pop.addEventListener('toggle', (e) => {
+      const open = (e as ToggleEvent).newState === 'open';
+      if (open) {
+        place();
+        reveal();
+        addEventListener('scroll', follow, { passive: true });
+        addEventListener('resize', show);
+      } else {
+        pinned = hovered = -1;
+        show();
+        removeEventListener('scroll', follow);
+        removeEventListener('resize', show);
+      }
+    });
+    pop.querySelector('.facets')?.addEventListener('scroll', follow, { passive: true });
+    pop.addEventListener('scroll', follow, { passive: true });
+  }
+</script>
+
+<style>
+  .explain {
+    --c: #009fe3;
+    --b: #2e3192;
+    --m: #e6007e;
+    --r: #e4002b;
+    --y: #ffd200;
+    --g: #00a650;
+    --blend: multiply;
+
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    width: min(480px, calc(100vw - 28px));
+    max-height: calc(100vh - 28px);
+    overflow: auto;
+    padding: 18px 20px 16px;
+    color: var(--ink);
+    background: color-mix(in srgb, var(--paper) 86%, transparent);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid var(--glass-edge);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    font-size: 13px;
+    line-height: 1.5;
+
+    opacity: 0;
+    translate: 0 6px;
+    transition:
+      opacity 0.22s ease,
+      translate 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+      overlay 0.22s allow-discrete,
+      display 0.22s allow-discrete;
+  }
+
+  .explain[data-side='above'] {
+    translate: 0 -6px;
+  }
+
+  .explain:popover-open {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  @starting-style {
+    .explain:popover-open {
+      opacity: 0;
+    }
+  }
+
+  .explain::backdrop {
+    background: transparent;
+  }
+
+  :global([data-theme='dark']) .explain {
+    --c: #0a7fb4;
+    --b: #3a4bb0;
+    --m: #b3176a;
+    --r: #b8202e;
+    --y: #b89a12;
+    --g: #198a4a;
+    --blend: screen;
+    border-color: rgb(205 240 215 / 0.18);
+  }
+
+  .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 99px;
+    background: transparent;
+    color: var(--ink-3);
+    cursor: pointer;
+  }
+
+  .close:hover {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+
+  .close svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+
+  .kicker {
+    margin: 0 0 2px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .aside {
+    margin: 1px 0 0;
+    font-size: 12.5px;
+    font-style: italic;
+    color: var(--ink-3);
+  }
+
+  .lede {
+    margin: 6px 0 0;
+    color: var(--ink-2);
+  }
+
+  .badge {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    margin-top: 8px;
+    padding: 6px 10px;
+    border-radius: 9px;
+    font-size: 12px;
+    color: var(--ink-2);
+    text-decoration: none;
+    background: color-mix(in srgb, var(--gold-bright) 14%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold-bright) 45%, transparent);
+    transition: background 0.2s ease;
+  }
+
+  .badge:hover {
+    background: color-mix(in srgb, var(--gold-bright) 24%, transparent);
+  }
+
+  .badge svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: var(--gold-bright);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .badge b {
+    font-weight: 600;
+    color: var(--gold);
+  }
+
+  .badge .src {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-3);
+  }
+
+  .venn {
+    display: block;
+    width: 100%;
+    max-width: 280px;
+    margin: 6px auto 0;
+    overflow: visible;
+  }
+
+  .v {
+    mix-blend-mode: var(--blend);
+    opacity: 0.5;
+    transition: opacity 0.25s ease;
+  }
+
+  .v-c { fill: var(--c); }
+  .v-b { fill: var(--b); opacity: 0.38; }
+  .v-m { fill: var(--m); }
+  .v-r { fill: var(--r); }
+  .v-y { fill: var(--y); opacity: 0.62; }
+  .v-g { fill: var(--g); }
+
+  .vl {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    fill: var(--ink-2);
+    transition: fill 0.25s ease;
+  }
+
+  .reg {
+    fill: none;
+    stroke: var(--paper);
+    stroke-width: 1.2;
+  }
+
+  .v,
+  .vl {
+    cursor: pointer;
+  }
+
+  /* The open facet lifts its petal in the rosette. */
+  /* :where() keeps this weaker than the per-ink rules below. */
+  .explain:where([data-ink]:not([data-ink=''])) .v {
+    opacity: 0.14;
+  }
+  .explain[data-ink='c'] .v-c,
+  .explain[data-ink='b'] .v-b,
+  .explain[data-ink='m'] .v-m,
+  .explain[data-ink='r'] .v-r,
+  .explain[data-ink='y'] .v-y,
+  .explain[data-ink='g'] .v-g {
+    opacity: 0.8;
+  }
+  .explain[data-ink='c'] .vl-c,
+  .explain[data-ink='b'] .vl-b,
+  .explain[data-ink='m'] .vl-m,
+  .explain[data-ink='r'] .vl-r,
+  .explain[data-ink='y'] .vl-y,
+  .explain[data-ink='g'] .vl-g {
+    fill: var(--ink);
+  }
+
+  .facets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .f {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: start;
+    gap: 9px;
+    cursor: pointer;
+    padding: 9px 10px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--accent-soft) 55%, transparent);
+    transition: background 0.2s ease;
+  }
+
+  .f > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .f.on,
+  .f:focus-visible {
+    background: var(--accent-soft);
+    outline: none;
+  }
+
+  /* A pinned facet keeps a ring in its own ink. */
+  .f.pinned {
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ink-f) 60%, transparent);
+  }
+
+  /* Picture rows: a small drawing, then one word. */
+  .rows {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rows li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+
+  .tile {
+    flex: none;
+    width: 38px;
+    height: 38px;
+    padding: 4px;
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--ink-f) 9%, var(--paper));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink-f) 18%, transparent);
+  }
+
+  /* Narrow screens: the rows unfold inside the facet itself. */
+  .rows.inline {
+    display: none;
+    flex-basis: 100%;
+    padding: 4px 0 2px 35px;
+  }
+
+  .explain[data-mode='inline'] .f.on .rows.inline {
+    display: grid;
+  }
+
+  .flyout {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    width: 230px;
+    padding: 12px 14px 14px;
+    color: var(--ink);
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid var(--glass-edge);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transition:
+      opacity 0.18s ease,
+      top 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+      overlay 0.18s allow-discrete,
+      display 0.18s allow-discrete;
+  }
+
+  .flyout:popover-open {
+    opacity: 1;
+  }
+
+  @starting-style {
+    .flyout:popover-open {
+      opacity: 0;
+    }
+  }
+
+  :global([data-theme='dark']) .flyout {
+    border-color: rgb(205 240 215 / 0.18);
+  }
+
+  .group {
+    display: none;
+  }
+
+  .group.on {
+    display: block;
+  }
+
+  .fl-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .fl-label::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ink-f);
+  }
+
+  .f-c { --ink-f: var(--c); }
+  .f-b { --ink-f: var(--b); }
+  .f-m { --ink-f: var(--m); }
+  .f-r { --ink-f: var(--r); }
+  .f-y { --ink-f: var(--y); }
+  .f-g { --ink-f: var(--g); }
+
+  .icon {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    fill: none;
+    stroke: var(--ink-2);
+    stroke-width: 1.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .icon .fill {
+    fill: var(--ink-f);
+    stroke: none;
+    opacity: 0.85;
+  }
+
+  h4 {
+    margin: 0;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .f p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+
+  .bridge {
+    margin: 12px 0 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-2);
+  }
+
+  /* A soft highlighter stroke under the key phrase. */
+  .bridge mark {
+    padding: 0 1px;
+    font-weight: 600;
+    color: var(--accent);
+    background: linear-gradient(transparent 58%, color-mix(in srgb, var(--accent) 22%, transparent) 58%);
+  }
+
+  .bridge span {
+    display: block;
+    margin-bottom: 2px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  @media (max-width: 420px) {
+    .facets {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .explain {
+      transition: none;
+    }
+  }
+</style>

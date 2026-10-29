@@ -6,7 +6,8 @@
   --rule: #e5e7da;
   --accent: #3d6b35;
   --accent-soft: #e6eed6;
-  --gold: #a77a1f;
+  --gold: #b88100;
+  --gold-bright: #ffb800;
   --meadow: #0b2410; /* page backdrop before the forest fades in */
   --shadow:
     0 1px 2px rgb(20 40 10 / 0.08), 0 8px 24px -6px rgb(20 40 10 / 0.18), 0 40px 80px -20px rgb(20 40 10 / 0.35);
@@ -28,7 +29,8 @@
   --rule: #223029;
   --accent: #a9cf8a;
   --accent-soft: #1b2a21;
-  --gold: #e3bc62;
+  --gold: #f0c560;
+  --gold-bright: #f4c94f;
   --meadow: #05110f;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 20px 60px -10px rgb(0 0 0 / 0.6);
   --glass-edge: rgb(255 255 255 / 0.07);

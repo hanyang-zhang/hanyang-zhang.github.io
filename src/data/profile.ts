@@ -42,6 +42,115 @@ export const news = [
   { date: '2026', text: 'Awarded the Engineering Vacation Research Internship Program Scholarship.' },
 ];
 
+// Terms in the bio that open a small explainer card when clicked. Each facet
+// is one discipline the field draws on, drawn in a process or overprint ink,
+// listed closest-to-HCI first; hovering or clicking one opens a side panel of
+// small pictures (`thumb` names a drawing in Thumb.astro).
+export type Ink = 'c' | 'b' | 'm' | 'r' | 'y' | 'g';
+export type Facet = { ink: Ink; icon: string; label: string; text: string; items: { thumb: string; label: string }[] };
+export type Explainer = {
+  id: string;
+  title: string;
+  aside: string;
+  lede: string;
+  badge?: { text: string; note: string; source: string; href: string };
+  facets: Facet[];
+  bridge: { label: string; text: string; highlight?: string };
+};
+export const explainers: Record<string, Explainer> = {
+  'Printing Engineering': {
+    id: 'printing',
+    title: 'What is Printing Engineering?',
+    aside: 'No, it isn’t fixing the office printer. (Though I can.)',
+    lede: 'A surprisingly broad engineering degree about turning digital content into things people see, hold and step into.',
+    badge: {
+      text: 'XAUT’s programme: #1 in China',
+      note: 'A+',
+      source: 'ShanghaiRanking 2026',
+      href: 'https://www.shanghairanking.cn/rankings/bcmr/2026/081703',
+    },
+    facets: [
+      {
+        ink: 'm',
+        icon: 'design',
+        label: 'Cross-media',
+        text: 'Design across print, screen and interactive media.',
+        items: [
+          { thumb: 'interaction', label: 'Interaction design' },
+          { thumb: 'vr', label: 'VR' },
+          { thumb: 'graphic', label: 'Graphic design' },
+          { thumb: 'publishing', label: 'Cross-media publishing' },
+        ],
+      },
+      {
+        ink: 'r',
+        icon: 'software',
+        label: 'Software',
+        text: 'Programming, graphics, image processing and AI.',
+        items: [
+          { thumb: 'code', label: 'C & Java' },
+          { thumb: 'teapot', label: 'Computer graphics' },
+          { thumb: 'halftone', label: 'Image processing' },
+          { thumb: 'ai', label: 'AI' },
+          { thumb: 'workflow', label: 'Print production systems' },
+        ],
+      },
+      {
+        ink: 'y',
+        icon: 'hardware',
+        label: 'Hardware',
+        text: 'Circuits, sensors and printed electronics.',
+        items: [
+          { thumb: 'pcb', label: 'Circuit boards' },
+          { thumb: 'chip', label: 'Microcomputers & assembly' },
+          { thumb: 'sensor', label: 'Sensors' },
+          { thumb: 'flex', label: 'Printed electronics' },
+        ],
+      },
+      {
+        ink: 'b',
+        icon: 'colour',
+        label: 'Colour',
+        text: 'How eyes see colour, from screen to paper.',
+        items: [
+          { thumb: 'cie', label: 'Colour science' },
+          { thumb: 'gamut', label: 'Colour management' },
+          { thumb: 'colourbar', label: 'Print quality control' },
+          { thumb: 'eye', label: 'Visual perception' },
+        ],
+      },
+      {
+        ink: 'g',
+        icon: 'machines',
+        label: 'Mechanics',
+        text: 'Engineering drawing, 3D printing and packaging.',
+        items: [
+          { thumb: 'print3d', label: '3D printing' },
+          { thumb: 'cad', label: 'CAD' },
+          { thumb: 'press', label: 'Printing presses' },
+          { thumb: 'dieline', label: 'Packaging' },
+        ],
+      },
+      {
+        ink: 'c',
+        icon: 'materials',
+        label: 'Materials',
+        text: 'Inks, papers and how they meet.',
+        items: [
+          { thumb: 'ink', label: 'Inks' },
+          { thumb: 'paper', label: 'Paper & substrates' },
+          { thumb: 'spread', label: 'Printability' },
+        ],
+      },
+    ],
+    bridge: {
+      label: 'What it gave me',
+      text: 'A habit of thinking across disciplines to connect code, colour, hardware and materials, and I like moving between them.',
+      highlight: 'thinking across disciplines',
+    },
+  },
+};
+
 // While nothing is out yet, the page shows this note instead of a list, plus a
 // line counting the papers marked `hidden` that are under review.
 export const publicationsNote = 'Nothing published yet🥲 but I’m working on it!';
@@ -69,7 +178,8 @@ export const publications = [
 // a grade (`score`), or an award (`award`).
 type Tag = { label: string; kind: 'target' | 'venue' | 'type' | 'score' | 'award' };
 
-export const research: { title: string; when: string; tags: Tag[]; summary: string }[] = [
+// Research entries take the same optional `image` and `focus` as projects below.
+export const research: { title: string; when: string; tags: Tag[]; summary: string; image?: string; focus?: string }[] = [
   {
     title: 'AI Art Wagers in Chinese Online Art Communities',
     when: '2026 —',
@@ -113,23 +223,29 @@ export const research: { title: string; when: string; tags: Tag[]; summary: stri
   },
 ];
 
-// Optional per project: `image` (a preview in public/, e.g. '/projects/treemap.png')
-// and `href` (where the title links to).
-export const projects: { title: string; kind: string; summary: string; image?: string; href?: string }[] = [
+// Optional per project: `image` (a preview in public/, e.g. '/projects/treemap.png',
+// opens full size when clicked), `focus` (which part the small preview keeps, as
+// a CSS object-position) and `href` (where the title links to).
+export const projects: { title: string; kind: string; summary: string; image?: string; focus?: string; href?: string }[] = [
   {
     title: 'Campus Sound Identity',
     kind: 'Installation',
     summary: 'A cardboard “vending machine” that trades your mood for a sound of campus — prototyped and tested Wizard-of-Oz style.',
+    image: '/projects/campus-sound.jpg',
+    focus: 'center 55%',
   },
   {
     title: 'Task Treemap',
     kind: 'Tool',
     summary: 'A to-do list drawn as a treemap: size is priority, colour is how long a task has been waiting.',
+    image: '/projects/task-treemap.jpg',
   },
   {
     title: 'HCI Deadlines',
     kind: 'Web',
     summary: 'A countdown of upcoming HCI conference deadlines.',
+    image: '/projects/hci-deadlines.jpg',
+    focus: 'left top',
   },
 ];
 
