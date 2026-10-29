@@ -1,0 +1,780 @@
+---
+import Base from '../layouts/Base.astro';
+import Meadow from '../components/Meadow.astro';
+import { profile, news, publications, research, projects, education, experience, awards } from '../data/profile';
+
+const sections = [
+  { id: 'about', label: 'About' },
+  { id: 'news', label: 'News' },
+  { id: 'research', label: 'Research' },
+  { id: 'publications', label: 'Publications' },
+  { id: 'projects', label: 'Projects' },
+  { id: 'background', label: 'Background' },
+  { id: 'contact', label: 'Contact' },
+];
+const num = (id: string) => String(sections.findIndex((s) => s.id === id) + 1).padStart(2, '0');
+const navItems = sections.filter((s) => ['research', 'publications', 'projects', 'contact'].includes(s.id));
+---
+
+<Base title={profile.name} description={`${profile.name} — HCI researcher. ${profile.tagline}`}>
+  <Meadow />
+
+  <main class="sheet">
+    <header class="top">
+      <a class="mark" href="#top" aria-label="Back to top">hz</a>
+      <nav aria-label="Sections">
+        {navItems.map((s) => <a href={`#${s.id}`}>{s.label}</a>)}
+      </nav>
+      <button class="theme" type="button" aria-label="Toggle day and night">
+        <svg class="sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+        </svg>
+        <svg class="moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <section class="hero" id="top">
+      <p class="status"><span class="dot" aria-hidden="true"></span>{profile.status}</p>
+      <h1>
+        {profile.name}
+        <span class="lede" aria-label={profile.lede.join(' ')}>
+          {profile.lede.map((line, i) => <span class:list={['line', { indent: i % 2 === 0 }]}>{line}</span>)}
+        </span>
+      </h1>
+
+      <dl class="facts">
+        <div>
+          <dt>Now</dt>
+          <dd>MCS, University of Sydney</dd>
+        </div>
+        <div>
+          <dt>Advisor</dt>
+          <dd>Prof. Eduardo Velloso</dd>
+        </div>
+        <div>
+          <dt>Based in</dt>
+          <dd>Sydney · <time class="clock" data-tz={profile.timezone}>--:--</time></dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="block" id="about">
+      <h2><span>{num('about')}</span>About</h2>
+      <div class="body">
+        {profile.bio.map((p) => <p>{p}</p>)}
+        <ul class="chips">
+          {profile.interests.map((i) => <li>{i}</li>)}
+        </ul>
+      </div>
+    </section>
+
+    <section class="block" id="news">
+      <h2><span>{num('news')}</span>News</h2>
+      <ul class="body news">
+        {
+          news.map((n) => (
+            <li>
+              <span class="date">{n.date}</span>
+              <span>{n.text}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="block" id="research">
+      <h2><span>{num('research')}</span>Research</h2>
+      <div class="body">
+        {
+          research.map((r) => (
+            <article class="entry">
+              <p class="meta">
+                <span>{r.when}</span>
+                <span>{r.venue}</span>
+                {r.award && <span class="award">✦ {r.award}</span>}
+              </p>
+              <h3>{r.title}</h3>
+              <p>{r.summary}</p>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="block" id="publications">
+      <h2><span>{num('publications')}</span>Publications</h2>
+      <ol class="body pubs">
+        {
+          publications.map((p) => (
+            <li>
+              <h3>{p.title}</h3>
+              <p class="authors">
+                {p.authors.map((a, i) => (
+                  <>
+                    {a === profile.name ? <strong>{a}</strong> : a}
+                    {i < p.authors.length - 1 && ', '}
+                  </>
+                ))}
+              </p>
+              <p class="meta">
+                <span>{p.venue}</span>
+                <span>{p.status}</span>
+              </p>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section class="block" id="projects">
+      <h2><span>{num('projects')}</span>Projects</h2>
+      <ul class="body projects">
+        {
+          projects.map((p) => (
+            <li>
+              <h3>{p.title}</h3>
+              <span class="kind">{p.kind}</span>
+              <p>{p.summary}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="block" id="background">
+      <h2><span>{num('background')}</span>Background</h2>
+      <div class="body ledger">
+        <h3>Education</h3>
+        <ul>
+          {education.map((e) => <li><span><b>{e.place}</b> {e.what}</span><span class="date">{e.when}</span></li>)}
+        </ul>
+        <h3>Experience</h3>
+        <ul>
+          {experience.map((e) => <li><span><b>{e.place}</b> {e.what}</span><span class="date">{e.when}</span></li>)}
+        </ul>
+        <h3>Awards</h3>
+        <ul>
+          {awards.map((a) => <li><span><b>{a.what}</b> {a.where}</span><span class="date">{a.when}</span></li>)}
+        </ul>
+      </div>
+    </section>
+
+    <section class="block" id="contact">
+      <h2><span>{num('contact')}</span>Contact</h2>
+      <div class="body">
+        <p class="hello">Always happy to talk about people, AI, and the things they make together.</p>
+        <ul class="emails">
+          {
+            profile.emails.map((e) => (
+              <li>
+                <span class="label">{e.label}</span>
+                <a href={`mailto:${e.address}`}>{e.address}</a>
+                <button type="button" class="copy" data-copy={e.address}>Copy</button>
+              </li>
+            ))
+          }
+        </ul>
+        {
+          profile.links.length > 0 && (
+            <p class="links">
+              {profile.links.map((l) => <a href={l.href}>{l.label} ↗</a>)}
+            </p>
+          )
+        }
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span>© {new Date().getFullYear()} {profile.name}</span>
+      <span>Grown in Sydney</span>
+    </footer>
+  </main>
+</Base>
+
+<script>
+  // Theme toggle: the meadow listens for `themechange` and fades to night.
+  const root = document.documentElement;
+  document.querySelector('.theme')?.addEventListener('click', () => {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    try {
+      localStorage.setItem('theme', next);
+    } catch {}
+    window.dispatchEvent(new Event('themechange'));
+  });
+
+  // Local time in Sydney.
+  const clock = document.querySelector<HTMLElement>('.clock');
+  if (clock) {
+    const fmt = new Intl.DateTimeFormat('en-AU', {
+      timeZone: clock.dataset.tz,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const tick = () => (clock.textContent = fmt.format(new Date()));
+    tick();
+    setInterval(tick, 15_000);
+  }
+
+  // Copy-to-clipboard for emails.
+  document.querySelectorAll<HTMLButtonElement>('button.copy').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(btn.dataset.copy ?? '');
+        btn.textContent = 'Copied';
+      } catch {
+        btn.textContent = 'Press ⌘C';
+      }
+      setTimeout(() => (btn.textContent = 'Copy'), 1600);
+    });
+  });
+
+  // Gently reveal sections as they come into view.
+  const io = new IntersectionObserver(
+    (entries) =>
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      }),
+    { rootMargin: '0px 0px -8% 0px' },
+  );
+  document.querySelectorAll('.block').forEach((el) => io.observe(el));
+</script>
+
+<style>
+  /* The column takes ~58% of the screen, close to a golden-ratio split with the
+     meadow. It's a pane of frosted glass: the grass shows through, softly. */
+  .sheet {
+    position: relative;
+    width: clamp(680px, 58vw, 980px);
+    margin: 28px auto;
+    padding: 28px clamp(40px, 5vw, 80px) 40px;
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--paper) 82%, transparent);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--shadow);
+  }
+
+  /* At night the glass edge catches moonlight from above: brightest along the
+     top, fading down the sides, with a faint green halo around the pane. */
+  .sheet::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      180deg,
+      rgb(205 240 215 / 0.42),
+      rgb(205 240 215 / 0.1) 18%,
+      rgb(205 240 215 / 0.05) 60%,
+      rgb(205 240 215 / 0.12)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+  }
+
+  :global([data-theme='dark']) .sheet::before {
+    opacity: 1;
+  }
+
+  :global([data-theme='dark']) .sheet {
+    box-shadow:
+      var(--shadow),
+      0 0 48px -12px rgb(130 200 155 / 0.22);
+  }
+
+  /* ---------- Top bar ---------- */
+  .top {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .mark {
+    font-weight: 500;
+    font-size: 17px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    text-decoration: none;
+    color: var(--accent);
+    margin-right: auto;
+  }
+
+  nav {
+    display: flex;
+    gap: 22px;
+    font-size: 13.5px;
+  }
+
+  nav a {
+    color: var(--ink-2);
+    text-decoration: none;
+  }
+
+  nav a:hover {
+    color: var(--ink);
+  }
+
+  .theme {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid var(--rule);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+
+  .theme:hover {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+
+  .theme svg {
+    grid-area: 1 / 1;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    transition:
+      opacity 0.4s,
+      transform 0.6s cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+
+  .moon {
+    opacity: 0;
+    transform: rotate(-60deg) scale(0.6);
+  }
+
+  :global([data-theme='dark']) .sun {
+    opacity: 0;
+    transform: rotate(60deg) scale(0.6);
+  }
+
+  :global([data-theme='dark']) .moon {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    padding: 72px 0 56px;
+  }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 28px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .dot {
+    position: relative;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: currentColor;
+    animation: ping 2.4s ease-out infinite;
+  }
+
+  @keyframes ping {
+    to {
+      transform: scale(3);
+      opacity: 0;
+    }
+  }
+
+  h1 {
+    margin: 0;
+    font-weight: 400;
+    font-size: clamp(38px, 5.4vw, 76px);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+
+  .lede {
+    display: block;
+    color: color-mix(in srgb, var(--ink-2) 75%, var(--ink-3));
+  }
+
+  .line {
+    display: block;
+  }
+
+  .line.indent {
+    padding-left: 0.9em;
+  }
+
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    margin: 48px 0 0;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .facts dt,
+  .block h2,
+  .meta,
+  .date,
+  .kind,
+  .label,
+  .foot {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .facts dd {
+    margin: 4px 0 0;
+    font-size: 14px;
+  }
+
+  .clock {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Sections ---------- */
+  .block {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
+    gap: 32px;
+    padding: 40px 0;
+    border-top: 1px solid var(--rule);
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 0.9s ease,
+      transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+      border-color 0.6s ease;
+  }
+
+  .block:global(.in) {
+    opacity: 1;
+    transform: none;
+  }
+
+  .block h2 {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+    margin: 3px 0 0;
+    font-weight: 400;
+  }
+
+  .block h2 span {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--accent);
+  }
+
+  .body {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .body > p:first-child {
+    margin-top: 0;
+  }
+
+  .body p {
+    color: var(--ink-2);
+  }
+
+  h3 {
+    margin: 0;
+    font-weight: 500;
+    font-size: 17px;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .chips li {
+    padding: 3px 11px;
+    font-size: 12.5px;
+    border-radius: 99px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .news li {
+    display: grid;
+    grid-template-columns: 80px minmax(0, 1fr);
+    gap: 16px;
+    padding: 7px 0;
+  }
+
+  .news .date {
+    padding-top: 3px;
+  }
+
+  .entry + .entry {
+    margin-top: 32px;
+  }
+
+  .entry p:last-child {
+    margin: 8px 0 0;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin: 0 0 6px;
+  }
+
+  .award {
+    color: var(--gold);
+  }
+
+  .pubs li + li {
+    margin-top: 26px;
+  }
+
+  .pubs h3 {
+    font-size: 16px;
+  }
+
+  .authors {
+    margin: 6px 0 6px;
+    font-size: 14px;
+  }
+
+  .authors strong {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .projects li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    padding: 14px 0;
+  }
+
+  .projects li:first-child {
+    padding-top: 0;
+  }
+
+  .projects li + li {
+    border-top: 1px dashed var(--rule);
+  }
+
+  .projects p {
+    grid-column: 1 / -1;
+    margin: 4px 0 0;
+  }
+
+  .ledger h3 {
+    margin-bottom: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .ledger ul {
+    margin: 0 0 26px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ledger ul:last-child {
+    margin-bottom: 0;
+  }
+
+  .ledger li {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 5px 0;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+
+  .ledger b {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .ledger .date {
+    flex-shrink: 0;
+    padding-top: 3px;
+  }
+
+  .hello {
+    max-width: 22ch;
+    margin: 0 0 24px;
+    font-size: clamp(24px, 2.6vw, 34px);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    color: var(--ink) !important;
+  }
+
+  .emails {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .emails li {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .emails a {
+    overflow-wrap: anywhere;
+    text-decoration: none;
+    background: linear-gradient(var(--accent), var(--accent)) 0 100% / 0 1px no-repeat;
+    transition: background-size 0.4s ease;
+  }
+
+  .emails a:hover {
+    background-size: 100% 1px;
+  }
+
+  .copy {
+    padding: 3px 10px;
+    font: inherit;
+    font-size: 12px;
+    border: 1px solid var(--rule);
+    border-radius: 99px;
+    background: transparent;
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+
+  .copy:hover {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+
+  .links {
+    display: flex;
+    gap: 18px;
+    margin-top: 20px;
+  }
+
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+  }
+
+  /* ---------- Small screens: meadow on top, sheet slides over ---------- */
+  @media (max-width: 760px) {
+    .sheet {
+      width: 100%;
+      margin: 38vh 0 0;
+      padding: 22px 22px 32px;
+      border-radius: 22px 22px 0 0;
+      border-width: 1px 0 0;
+    }
+
+    .sheet::before {
+      inset: -1px 0 0;
+    }
+
+    .line.indent {
+      padding-left: 0.6em;
+    }
+
+    nav {
+      display: none;
+    }
+
+    .hero {
+      padding: 44px 0 40px;
+    }
+
+    .facts {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .block {
+      grid-template-columns: 1fr;
+      gap: 14px;
+      padding: 32px 0;
+    }
+
+    .block h2 {
+      position: static;
+      display: flex;
+      gap: 10px;
+    }
+
+    .news li {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .ledger li {
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .emails li {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .emails .label {
+      grid-column: 1 / -1;
+    }
+  }
+</style>
