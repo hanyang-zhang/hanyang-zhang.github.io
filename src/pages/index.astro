@@ -17,12 +17,18 @@ import {
   experience,
   awards,
   explainers,
+  sketches,
+  sketchesNote,
 } from '../data/profile';
 
 const wagerEntry = research.find((r) => r.scene === 'wager');
 const treellisEntry = research.find((r) => r.scene === 'treellis');
 const pelitaEntry = research.find((r) => r.scene === 'pelita');
 const lecnoteEntry = research.find((r) => r.scene === 'lecnote');
+
+// Sketches come pre-sized for the zoomed view (292px) at 1x, 2x and 3x, so they
+// land on screen pixel for pixel.
+const at = (src: string, w: number) => src.replace('.webp', `-${w}.webp`);
 
 // Split bio text around glossary terms so they can open their explainer.
 const termPattern = new RegExp(`(${Object.keys(explainers).join('|')})`);
@@ -35,6 +41,7 @@ const sections = [
   { id: 'publications', label: 'Publications' },
   { id: 'projects', label: 'Projects' },
   { id: 'background', label: 'Background' },
+  { id: 'drawing', label: 'Off the clock' },
   { id: 'contact', label: 'Contact' },
 ].filter((s) => !hiddenSections.includes(s.id));
 const shown = (id: string) => sections.some((s) => s.id === id);
@@ -276,6 +283,37 @@ const pendingLine =
       </div>
     </section>
 
+    {shown('drawing') && <section class="block" id="drawing">
+      <h2><span>{num('drawing')}</span>Off the clock</h2>
+      <div class="body">
+        <p>{sketchesNote.map((line, i) => <>{i > 0 && <br />}{line}</>)}</p>
+        <!-- A slow, endless drift: the row is drawn twice so it can loop. Pieces lift a little on hover, never to full size. -->
+        <div class="sketches">
+          <ul>
+            {
+              [false, true].map((copy) =>
+                sketches.map((s) => (
+                  <li aria-hidden={copy ? 'true' : undefined}>
+                    <img
+                      src={at(s.src, 584)}
+                      srcset={[292, 584, 876].map((w) => `${at(s.src, w)} ${w}w`).join(', ')}
+                      sizes="292px"
+                      alt={copy ? '' : s.alt}
+                      width="292"
+                      height="292"
+                      draggable="false"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </li>
+                )),
+              )
+            }
+          </ul>
+        </div>
+      </div>
+    </section>}
+
     <section class="block" id="contact">
       <h2><span>{num('contact')}</span>Contact</h2>
       <div class="body">
@@ -406,6 +444,91 @@ const pendingLine =
     { rootMargin: '0px 0px -8% 0px' },
   );
   document.querySelectorAll('.block').forEach((el) => io.observe(el));
+
+  // Drawing strip: drifts slowly, pauses under the mouse, and can be dragged
+  // (with a little fling). The row is drawn twice, so the offset wraps at half
+  // its width. The loop only runs while something is moving and the strip is
+  // on screen, to keep the laptop cool.
+  const strip = document.querySelector<HTMLElement>('.sketches');
+  const track = strip?.querySelector<HTMLElement>('ul');
+  if (strip && track) {
+    const drift = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 12; // px per second
+    let x = 0;
+    let v = 0; // fling speed, px per second
+    let last = 0;
+    let frame = 0;
+    let visible = false;
+    let hovering = false;
+    let drag: { id: number; px: number; t: number } | null = null;
+
+    // Snap the drawn position to whole device pixels: a strip resting between
+    // two pixels gets resampled by the browser and every piece looks soft.
+    const place = () => {
+      const half = track.scrollWidth / 2;
+      x = ((x % half) + half) % half;
+      const left = strip.getBoundingClientRect().left;
+      const dpr = devicePixelRatio || 1;
+      const shift = Math.round((left - x) * dpr) / dpr - left;
+      track.style.transform = `translate3d(${shift}px, 0, 0)`;
+    };
+    const moving = () => visible && !drag && (v !== 0 || (!hovering && drift > 0));
+    const tick = (t: number) => {
+      const dt = Math.min((t - last) / 1000, 0.05);
+      last = t;
+      x += (v + (hovering ? 0 : drift)) * dt;
+      v *= Math.pow(0.03, dt); // fling fades out over about a second
+      if (Math.abs(v) < 4) v = 0;
+      place();
+      frame = moving() ? requestAnimationFrame(tick) : 0;
+    };
+    const wake = () => {
+      if (!frame && moving()) {
+        last = performance.now();
+        frame = requestAnimationFrame(tick);
+      }
+    };
+
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      wake();
+    }).observe(strip);
+
+    track.addEventListener('pointerenter', (e) => {
+      if (e.pointerType === 'mouse') hovering = true;
+    });
+    track.addEventListener('pointerleave', (e) => {
+      if (e.pointerType === 'mouse') hovering = false;
+      wake();
+    });
+
+    track.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      drag = { id: e.pointerId, px: e.clientX, t: e.timeStamp };
+      v = 0;
+      track.setPointerCapture(e.pointerId);
+      strip.classList.add('dragging');
+    });
+    track.addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.px;
+      const dt = Math.max(e.timeStamp - drag.t, 1) / 1000;
+      x -= dx;
+      v = 0.8 * v + 0.2 * (-dx / dt); // smoothed, for the fling
+      drag.px = e.clientX;
+      drag.t = e.timeStamp;
+      place();
+    });
+    const release = (e: PointerEvent) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      if (e.timeStamp - drag.t > 80) v = 0; // held still before letting go: no fling
+      v = Math.max(-1500, Math.min(1500, v)); // a hard flick glides a few pieces, not the whole row
+      drag = null;
+      strip.classList.remove('dragging');
+      wake();
+    };
+    track.addEventListener('pointerup', release);
+    track.addEventListener('pointercancel', release);
+  }
 
   // Sticky header: frost it once it's pinned, show the full name once the
   // headline is gone, and mark the nav link for the section being read.
@@ -1308,6 +1431,106 @@ const pendingLine =
     padding-top: 3px;
   }
 
+  /* ---------- Drawing strip ---------- */
+  /* above the sections that follow, which an enlarged piece can overlap */
+  #drawing {
+    position: relative;
+    z-index: 2;
+  }
+
+  .sketches {
+    --size: 112px;
+    /* about 2.6x; a whole, even number so the zoomed piece sits on whole pixels */
+    --big: 292px;
+    /* Room for a lifted piece, so the clip doesn't cut it. The negative
+       margins keep the layout tight; the enlarged piece floats over the
+       text around it, so the strip itself lets clicks through. */
+    padding: 106px 0;
+    margin-block: -66px -106px;
+    overflow: hidden;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+  }
+
+  .sketches ul {
+    display: flex;
+    pointer-events: auto;
+    width: max-content;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    cursor: grab;
+    user-select: none;
+    /* vertical swipes still scroll the page; sideways ones drag the strip */
+    touch-action: pan-y;
+    /* the drift and dragging are driven from the script */
+    will-change: transform;
+  }
+
+  .sketches:global(.dragging) ul {
+    cursor: grabbing;
+  }
+
+  .sketches li {
+    position: relative;
+    flex: 0 0 var(--size);
+    height: var(--size);
+    /* a margin, not a gap, so both copies are exactly the same width */
+    margin-right: 14px;
+  }
+
+  /* a loose, hand-placed look */
+  .sketches li:nth-child(4n + 1) { --tilt: -2deg; }
+  .sketches li:nth-child(4n + 2) { --tilt: 1.5deg; }
+  .sketches li:nth-child(4n + 3) { --tilt: -1deg; }
+  .sketches li:nth-child(4n + 4) { --tilt: 2deg; }
+
+  /* The piece grows by its real size rather than a scale transform, and the
+     zoomed one sits on whole pixels with no half-pixel centring, so the
+     292px image files land on screen pixel for pixel instead of being
+     resampled. The edge is an outline, not a border, for the same reason. */
+  .sketches img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: var(--size);
+    height: var(--size);
+    object-fit: cover;
+    outline: 1px solid var(--glass-edge);
+    outline-offset: -1px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+    transform: rotate(var(--tilt, 0deg));
+    -webkit-user-drag: none;
+    transition-property: top, left, width, height, transform, box-shadow;
+    transition-duration: 0.32s;
+    transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .sketches:not(:global(.dragging)) li:hover {
+    z-index: 1;
+  }
+
+  .sketches:not(:global(.dragging)) li:hover img {
+    /* centred on its slot, lifted 12px */
+    top: calc((var(--size) - var(--big)) / 2 - 12px);
+    left: calc((var(--size) - var(--big)) / 2);
+    width: var(--big);
+    height: var(--big);
+    border-radius: 5px;
+    box-shadow: 0 12px 30px rgb(0 0 0 / 0.24);
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sketches img {
+      transition: none;
+    }
+  }
+
   .hello {
     max-width: 22ch;
     margin: 0 0 24px;
@@ -1509,7 +1732,7 @@ const pendingLine =
     }
 
     .block {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: 14px;
       padding: 22px var(--pad-x);
     }

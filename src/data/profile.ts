@@ -323,3 +323,22 @@ export const awards = [
   { what: '“Dongfeng Printing” Scholarship, top 5%', where: 'XAUT', when: '2019 — 2020' },
   { what: 'Third Prize, “Internet+” Innovation & Entrepreneurship Competition', where: 'XAUT', when: '2020' },
 ];
+
+// Procreate pieces, cropped square in public/sketches/ (each also saved as -292, -584 and -876 px).
+export const sketchesNote = ['I’ve always loved drawing! I usually draw in Procreate.', 'A few sketches, most of them happily unfinished🎨'];
+
+export const sketches = [
+  { src: '/sketches/sketch-01.webp', alt: 'A girl in profile, drawn in white lines on blue' },
+  { src: '/sketches/sketch-02.webp', alt: 'A pink-haired girl floating, one hand raised' },
+  { src: '/sketches/sketch-03.webp', alt: 'A red-haired woman among pale butterflies' },
+  { src: '/sketches/sketch-04.webp', alt: 'A woman in a long white dress reaching up' },
+  { src: '/sketches/sketch-05.webp', alt: 'A woman in a red cape, framed in dark red' },
+  { src: '/sketches/sketch-06.webp', alt: 'A small boy with glasses and a striped scarf in the snow' },
+  { src: '/sketches/sketch-07.webp', alt: 'A girl with a headband against a windy sky' },
+  { src: '/sketches/sketch-08.webp', alt: 'A tall figure in a long pale coat' },
+  { src: '/sketches/sketch-09.webp', alt: 'A girl holding a clear umbrella' },
+  { src: '/sketches/sketch-10.webp', alt: 'A woman wearing a red pointed headpiece' },
+  { src: '/sketches/sketch-11.webp', alt: 'A blonde girl in a red dress, sitting' },
+  { src: '/sketches/sketch-12.webp', alt: 'A monochrome study of a man’s face' },
+  { src: '/sketches/sketch-13.webp', alt: 'A girl in a cardigan, mid-step' },
+];
