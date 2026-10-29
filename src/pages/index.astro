@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Meadow from '../components/Meadow.astro';
 import Explainer from '../components/Explainer.astro';
+import WagerScene from '../components/WagerScene.astro';
 import {
   profile,
   hiddenSections,
@@ -15,6 +16,8 @@ import {
   awards,
   explainers,
 } from '../data/profile';
+
+const wagerEntry = research.find((r) => r.scene === 'wager');
 
 // Split bio text around glossary terms so they can open their explainer.
 const termPattern = new RegExp(`(${Object.keys(explainers).join('|')})`);
@@ -155,11 +158,15 @@ const pendingLine =
         {
           research.map((r) => (
             <article class:list={['entry', { 'has-image': r.image }]}>
-              {r.image && (
+              {r.image && (r.scene ? (
+                <button class="thumb" type="button" data-scene={r.scene} aria-label={`Open an interactive 3D view of ${r.title}`}>
+                  <img src={r.image} alt="" loading="lazy" style={r.focus && `object-position: ${r.focus}`} />
+                </button>
+              ) : (
                 <button class="thumb" type="button" data-full={r.image} data-caption={r.title} aria-label={`Enlarge picture of ${r.title}`}>
                   <img src={r.image} alt="" loading="lazy" style={r.focus && `object-position: ${r.focus}`} />
                 </button>
-              )}
+              ))}
               <p class="meta">
                 <span class="when">{r.when}</span>
                 {r.tags.map((t) => (
@@ -306,6 +313,7 @@ const pendingLine =
       <figcaption></figcaption>
     </figure>
   </dialog>
+  {wagerEntry && <WagerScene title={wagerEntry.title} />}
 </Base>
 
 <script>

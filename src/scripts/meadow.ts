@@ -467,8 +467,10 @@ export function initMeadow(canvas: HTMLCanvasElement) {
     frame = requestAnimationFrame(loop);
   }
 
+  // A dialog with its own 3D scene can hold the forest still while it's open.
+  let held = false;
   function start() {
-    if (running || reduceMotion) return;
+    if (running || reduceMotion || held) return;
     running = true;
     timer.update();
     loop();
@@ -483,6 +485,14 @@ export function initMeadow(canvas: HTMLCanvasElement) {
   }
   window.addEventListener('scroll', requestRender, { passive: true });
   document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+  window.addEventListener('meadowpause', () => {
+    held = true;
+    stop();
+  });
+  window.addEventListener('meadowresume', () => {
+    held = false;
+    start();
+  });
 
   render();
   canvas.dataset.ready = 'true';

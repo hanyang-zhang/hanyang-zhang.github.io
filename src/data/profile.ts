@@ -179,11 +179,15 @@ export const publications = [
 type Tag = { label: string; kind: 'target' | 'venue' | 'type' | 'score' | 'award' };
 
 // Research entries take the same optional `image` and `focus` as projects below.
-export const research: { title: string; when: string; tags: Tag[]; summary: string; image?: string; focus?: string }[] = [
+// `scene` opens an interactive 3D view instead of the picture (see WagerScene.astro).
+export const research: { title: string; when: string; tags: Tag[]; summary: string; image?: string; focus?: string; scene?: 'wager' }[] = [
   {
     title: 'AI Art Wagers in Chinese Online Art Communities',
     when: '2026 —',
     tags: [{ label: 'Targeting FAccT ’27', kind: 'target' }],
+    image: '/research/wager.jpg',
+    focus: 'center 45%',
+    scene: 'wager',
     summary:
       'On Xiaohongshu, suspicions of AI use can escalate into public wagers with money on the line, drawing demonstrations, and negotiated judging rules. I trace how these challenges unfold — how people set rules, present evidence, and live with the outcome.',
   },
@@ -191,6 +195,8 @@ export const research: { title: string; when: string; tags: Tag[]; summary: stri
     title: 'Pelita: AI Assistance Embedded in Course Materials',
     when: '2026 —',
     tags: [{ label: 'Targeting DIS ’27', kind: 'target' }],
+    image: '/research/pelita.svg',
+    focus: 'center',
     summary:
       'A web-based learning platform that weaves course materials, contextual AI help, and learners’ own notes together. Currently deployed in a real university course.',
   },
@@ -201,6 +207,8 @@ export const research: { title: string; when: string; tags: Tag[]; summary: stri
       { label: 'Master’s thesis', kind: 'type' },
       { label: '97/100', kind: 'score' },
     ],
+    image: '/research/lecnote.svg',
+    focus: 'center',
     summary:
       'I built LecNote, a full-stack platform whose AI help is grounded in selected slide regions, and ran a within-subjects study (N = 12) comparing learner-initiated and system-initiated assistance.',
   },
@@ -211,6 +219,8 @@ export const research: { title: string; when: string; tags: Tag[]; summary: stri
       { label: 'UIST ’26', kind: 'venue' },
       { label: 'Best Paper Award', kind: 'award' },
     ],
+    image: '/research/treellis.svg',
+    focus: 'center',
     summary:
       'A system for progressively editing AI-generated 3D models. I contributed to parts of the implementation and the appendix, acknowledged in the paper.',
   },
@@ -218,9 +228,21 @@ export const research: { title: string; when: string; tags: Tag[]; summary: stri
     title: 'U²-SE-DIM: Deep Image Matting for Pre-Press',
     when: '2021 — 2022',
     tags: [{ label: 'Undergraduate thesis', kind: 'type' }],
+    image: '/research/matting.svg',
+    focus: 'center',
     summary:
       'An automatic matting framework combining U²-Net trimap generation with an attention-enhanced Deep Image Matting network.',
   },
+];
+
+// The stages of an AI wager, listed beside its 3D scene; each one drives the scene.
+export const wagerStages = [
+  { title: 'Suspicion', text: 'Someone publicly suggests a creator’s work used AI.' },
+  { title: 'Wager', text: 'One side puts money on it; the other accepts or walks away.' },
+  { title: 'Rules', text: 'Stake, livestream format, who votes, what voids the bet.' },
+  { title: 'Livestream', text: 'The creator draws live; files go to an intermediary.' },
+  { title: 'Adjudication', text: 'Eligible viewers vote: AI or not.' },
+  { title: 'Closure', text: 'The stake moves; apologies, deletions and replies follow.' },
 ];
 
 // Optional per project: `image` (a preview in public/, e.g. '/projects/treemap.png',
