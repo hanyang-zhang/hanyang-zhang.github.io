@@ -258,8 +258,15 @@ export function buildCanopyWorld({ scene, shared, small }: WorldContext): World 
           // an irregular clump of leaves: ragged outline, gaps near the edge
           float edge = 0.5 * (0.7 + 0.3 * noise(vec2(a * 1.6 + vRand * 40.0, vRand * 9.0)));
           float holes = noise(uv * 11.0 + vRand * 31.0);
+          // Soft, pixel-wide edges instead of a hard cut; with alpha-to-coverage the
+          // multisampling smooths them, so big near clumps don't look jagged.
+          // (derivatives taken up front, outside any branch)
+          float d = r - edge, inner = r - edge * 0.6, h = holes - 0.42;
+          float fd = fwidth(d), fi = fwidth(inner), fh = fwidth(h);
+          float cover = 1.0 - smoothstep(-fd, fd, d);
           // (tiny, distant clumps skip the holes, which would only shimmer)
-          if (r > edge || (vSize > 7.0 && r > edge * 0.6 && holes < 0.42)) discard;
+          if (vSize > 7.0) cover *= 1.0 - smoothstep(-fi, fi, inner) * (1.0 - smoothstep(-fh, fh, h));
+          if (cover < 0.02) discard;
 
           // Give each clump the depth of a little dome, so overlapping clumps
           // intersect in a stable way instead of flickering as they sway.
@@ -270,9 +277,10 @@ export function buildCanopyWorld({ scene, shared, small }: WorldContext): World 
           float lit = 0.82 + 0.4 * dot(uv, vec2(0.7, -0.7));
           lit *= 0.72 + 0.5 * noise(uv * 16.0 + vRand * 13.0);
           lit *= mix(1.0, 0.7, smoothstep(0.2, 0.5, r / (edge * 2.0))); // darker toward the clump edge
-          gl_FragColor = vec4(applyFog(vColor * lit, vDepth), 1.0);
+          gl_FragColor = vec4(applyFog(vColor * lit, vDepth), cover);
           #include <colorspace_fragment>
         }`,
+      alphaToCoverage: true,
     }),
   );
   leaves.frustumCulled = false;

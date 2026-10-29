@@ -1,4 +1,7 @@
 <canvas class="meadow" aria-hidden="true"></canvas>
+<!-- Depth of field, focused on the middle distance: the far hills (top of the view)
+     blur most, the nearest crowns (bottom) just slightly. -->
+<div class="meadow-haze" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <p class="meadow-hint" aria-hidden="true">Try moving your cursor</p>
 
 <script>
@@ -6,6 +9,8 @@
 
   const canvas = document.querySelector<HTMLCanvasElement>('canvas.meadow');
   if (canvas) initMeadow(canvas);
+  // `?dof=0` shows the forest without it, for comparison.
+  if (new URLSearchParams(location.search).get('dof') === '0') document.querySelector('.meadow-haze')?.remove();
 </script>
 
 <style>
@@ -24,6 +29,51 @@
   }
 
   .meadow[data-failed] {
+    display: none;
+  }
+
+  /* Stacked blurs that build toward the top (distance); one faint layer softens the bottom. */
+  .meadow-haze,
+  .meadow-haze i {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .meadow-haze i {
+    -webkit-backdrop-filter: blur(var(--b));
+    backdrop-filter: blur(var(--b));
+    -webkit-mask-image: linear-gradient(var(--dir, to bottom), #000 var(--from), transparent var(--to));
+    mask-image: linear-gradient(var(--dir, to bottom), #000 var(--from), transparent var(--to));
+  }
+
+  .meadow-haze i:nth-child(1) {
+    --b: 1.2px;
+    --from: 12%;
+    --to: 42%;
+  }
+
+  .meadow-haze i:nth-child(2) {
+    --b: 2.5px;
+    --from: 4%;
+    --to: 28%;
+  }
+
+  .meadow-haze i:nth-child(3) {
+    --b: 5px;
+    --from: 0%;
+    --to: 16%;
+  }
+
+  /* the nearest crowns, from the bottom edge up */
+  .meadow-haze i:nth-child(4) {
+    --b: 0.9px;
+    --dir: to top;
+    --from: 0%;
+    --to: 30%;
+  }
+
+  .meadow[data-failed] ~ .meadow-haze {
     display: none;
   }
 

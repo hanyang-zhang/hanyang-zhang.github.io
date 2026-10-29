@@ -80,7 +80,9 @@ export async function mountWager(
   { background = '#eef2e6', step: first = 1, still = false, thumb = false, capture = false } = {},
 ): Promise<WagerScene> {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: capture });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  // Kept light to run cool: 1.5x pixels, a small shadow map, and plain see-through
+  // glass (real transmission re-renders the whole scene every frame).
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -99,7 +101,7 @@ export async function mountWager(
   const sun = new THREE.DirectionalLight('#fff3dc', 2.6);
   sun.position.set(-3.5, 9, 4.5);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.mapSize.set(1024, 1024);
   sun.shadow.radius = 8;
   sun.shadow.bias = -0.0004;
   Object.assign(sun.shadow.camera, { left: -5, right: 5, top: 5, bottom: -5 });
@@ -147,7 +149,7 @@ export async function mountWager(
     const slab = new THREE.Mesh(
       new RoundedBoxGeometry(S + 0.12, T, S + 0.12, 4, 0.025),
       L.glass
-        ? new THREE.MeshPhysicalMaterial({ color: '#ffffff', transmission: 1, roughness: 0.05, thickness: 0.15, ior: 1.45, clearcoat: 1 })
+        ? new THREE.MeshPhysicalMaterial({ color: '#ffffff', transparent: true, opacity: 0.32, depthWrite: false, roughness: 0.05, clearcoat: 1 })
         : new THREE.MeshStandardMaterial({ color: '#fbfaf4', roughness: 0.85 }),
     );
     slab.castShadow = !L.glass;
@@ -266,7 +268,7 @@ export async function mountWager(
   const ring = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.045, 24, 96), rim);
   const lens = new THREE.Mesh(
     new THREE.CylinderGeometry(0.41, 0.41, 0.05, 96),
-    new THREE.MeshPhysicalMaterial({ color: '#ffffff', transmission: 1, roughness: 0, thickness: 0.5, ior: 1.6, clearcoat: 1 }),
+    new THREE.MeshPhysicalMaterial({ color: '#eaf4ee', transparent: true, opacity: 0.28, depthWrite: false, roughness: 0, clearcoat: 1 }),
   );
   lens.rotation.x = Math.PI / 2;
   const handle = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.6, 8, 24), rim);
@@ -294,6 +296,21 @@ export async function mountWager(
   controls.minAzimuthAngle = base - 0.6;
   controls.maxAzimuthAngle = base + 0.6;
 
+  // Draw only while something moves: a step change, a drag, a resize. After a quiet
+  // spell the gentle bobbing eases out and the loop stops, so a resting scene costs nothing.
+  const QUIET = still ? 600 : 6000;
+  let stirred = performance.now();
+  let calm = still ? 0 : 1; // how much the idle bobbing shows
+  let looping = false;
+  const wake = () => {
+    stirred = performance.now();
+    if (!looping) {
+      looping = true;
+      renderer.setAnimationLoop(frame);
+    }
+  };
+  controls.addEventListener('change', wake);
+
   const resize = () => {
     const { clientWidth: w, clientHeight: h } = canvas;
     if (!w || !h) return;
@@ -302,10 +319,9 @@ export async function mountWager(
     // Pull back on narrow canvases (phones), where the width is what runs out.
     camera.zoom = zoom * Math.min(1, camera.aspect / 1.15);
     camera.updateProjectionMatrix();
+    wake();
   };
-  resize();
   const watcher = new ResizeObserver(resize);
-  watcher.observe(canvas);
 
   let step = first;
   let snap = true; // jump straight to the first state
@@ -323,14 +339,16 @@ export async function mountWager(
     o.visible = s > 0.01;
   };
 
-  renderer.setAnimationLoop(() => {
+  function frame() {
     timer.update();
     const dt = Math.min(timer.getDelta(), 0.05);
     const t = timer.getElapsed();
     // A still preview jumps straight to each state instead of easing into it.
     const since = still ? Infinity : t - entered;
     const ease = (rate) => (snap || still ? 1 : 1 - Math.exp(-rate * dt));
-    const bob = still ? 0 : 1;
+    const quiet = performance.now() - stirred > QUIET;
+    calm += ((quiet || still ? 0 : 1) - calm) * ease(1.5);
+    const bob = calm;
     const apart = step === 4 || step === 5;
 
     sheets.forEach((g, i) => {
@@ -389,7 +407,7 @@ export async function mountWager(
       // Scan up and down a line clear of every layer's right edge, never through them.
       const s = (Math.sin(t * 0.7) + 1) / 2;
       const x = layers[3].apart.x + H + 0.75;
-      tmp.copy(onSheet(3, x - layers[3].apart.x, 0.6, -0.2)).lerp(onSheet(1, x - layers[1].apart.x, 0.6, -0.2), bob ? s : 0.3);
+      tmp.copy(onSheet(3, x - layers[3].apart.x, 0.6, -0.2)).lerp(onSheet(1, x - layers[1].apart.x, 0.6, -0.2), 0.3 + (s - 0.3) * bob);
     } else {
       tmp.copy(onSheet(3, 0.95, 0.9 + Math.sin(t * 0.5) * 0.05 * bob, -0.55));
     }
@@ -403,7 +421,14 @@ export async function mountWager(
     snap = false;
     controls.update();
     renderer.render(scene, camera);
-  });
+    if (quiet && calm < 0.002) {
+      looping = false;
+      renderer.setAnimationLoop(null);
+    }
+  }
+
+  resize();
+  watcher.observe(canvas);
 
   return {
     setStep(n) {
@@ -411,12 +436,16 @@ export async function mountWager(
       step = n;
       entered = timer.getElapsed();
       if (still) snap = true;
+      wake();
     },
     setBackground(colour) {
       (scene.background as THREE.Color).set(colour);
+      wake();
     },
     dispose() {
+      looping = false;
       renderer.setAnimationLoop(null);
+      controls.removeEventListener('change', wake);
       watcher.disconnect();
       controls.dispose();
       scene.traverse((o) => {

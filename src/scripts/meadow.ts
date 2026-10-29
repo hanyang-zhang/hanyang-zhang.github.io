@@ -108,7 +108,8 @@ export function initMeadow(canvas: HTMLCanvasElement) {
 
   let renderer: THREE.WebGLRenderer;
   try {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: !style.pixel, powerPreference: 'high-performance' });
+    // Default power preference, so laptops stay on their integrated GPU for a background.
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: !style.pixel });
   } catch {
     canvas.dataset.failed = 'true';
     return;
@@ -120,7 +121,8 @@ export function initMeadow(canvas: HTMLCanvasElement) {
     renderer.setPixelRatio(1 / style.pixel);
     canvas.style.imageRendering = 'pixelated';
   } else {
-    renderer.setPixelRatio(Math.min(devicePixelRatio, small ? 1.5 : 1.75));
+    // A soft background behind frosted glass; fewer pixels keep the GPU (and laptop) cool.
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
   }
 
   const isNight = () => document.documentElement.dataset.theme === 'dark';
@@ -460,11 +462,26 @@ export function initMeadow(canvas: HTMLCanvasElement) {
     camera.lookAt(lookAt);
 
     renderer.render(scene, camera);
+    // Soft leaf edges (alpha-to-coverage) leave alpha below 1 there; fill it back in
+    // so the page never shows through the canvas.
+    const gl = renderer.getContext();
+    gl.colorMask(false, false, false, true);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    renderer.resetState();
   }
 
-  function loop() {
-    render();
+  // The forest moves slowly, so 30 frames a second is plenty and runs much cooler;
+  // while the page scrolls it runs at the display's rate so the parallax stays smooth.
+  let last = 0;
+  let scrolledAt = -Infinity;
+  window.addEventListener('scroll', () => (scrolledAt = performance.now()), { passive: true });
+  function loop(now = performance.now()) {
     frame = requestAnimationFrame(loop);
+    const brisk = now - scrolledAt < 600;
+    if (!brisk && now - last < 1000 / 30 - 4) return;
+    last = now;
+    render();
   }
 
   // A dialog with its own 3D scene can hold the forest still while it's open.
