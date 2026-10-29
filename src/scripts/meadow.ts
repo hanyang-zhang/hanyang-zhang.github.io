@@ -14,7 +14,9 @@ import { sharedUniforms, type World, type WorldContext } from './worlds/shared';
 
 interface Style {
   camera: { pos: [number, number, number]; look: [number, number, number]; fov: number };
-  portrait?: { pos: [number, number, number]; look: [number, number, number] };
+  // Portrait screens show the scene only in a band above the content; `offset`
+  // shifts the view up into that band (0 keeps the full frame).
+  portrait?: { pos: [number, number, number]; look: [number, number, number]; fov?: number; offset?: number };
   fog: [number, number];
   pixel?: number; // >0: render at 1/pixel resolution with a dithered, posterised palette
   world: (ctx: WorldContext) => World;
@@ -87,7 +89,8 @@ const STYLES: Record<string, Style> = {
     // Like a photo taken from a hillside: near crowns large, far ones fading
     // into dark green haze.
     camera: { pos: [0, 16, 20], look: [0, 3, -10], fov: 42 },
-    portrait: { pos: [0, 20, 12], look: [0, 2, -2] },
+    // on phones, look out over the hills too, so the band above the content is a vista
+    portrait: { pos: [0, 16, 20], look: [0, 2, -6], fov: 60, offset: 0 },
     fog: [30, 80],
     world: buildCanopyWorld,
   },
@@ -373,7 +376,7 @@ export function initMeadow(canvas: HTMLCanvasElement) {
     if (w / h < 1) {
       // Portrait: only the top strip of the screen shows the scene (the sheet
       // covers the rest), so look down at nearby ground and shift the view up.
-      camera.fov = 50;
+      camera.fov = style.portrait?.fov ?? 50;
       if (style.portrait) {
         camBase.set(...style.portrait.pos);
         lookAt.set(...style.portrait.look);
@@ -382,7 +385,9 @@ export function initMeadow(canvas: HTMLCanvasElement) {
         camBase.z = 8.5;
         lookAt.set(0, world.groundY + 0.5, 2);
       }
-      camera.setViewOffset(w, h, 0, h * 0.3, w, h);
+      const offset = style.portrait?.offset ?? 0.3;
+      if (offset > 0) camera.setViewOffset(w, h, 0, h * offset, w, h);
+      else camera.clearViewOffset();
     } else {
       camera.fov = style.camera.fov;
       camera.clearViewOffset();

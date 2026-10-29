@@ -361,7 +361,7 @@ const pendingLine =
     position: relative;
     --pad-x: clamp(40px, 5vw, 80px);
     width: clamp(680px, 58vw, 980px);
-    margin: 28px auto;
+    margin: 30vh auto 28px; /* open on a full-width view of the forest */
     padding: 8px var(--pad-x) 40px;
     border-radius: 22px;
     background: color-mix(in srgb, var(--paper) 82%, transparent);
@@ -1067,19 +1067,51 @@ const pendingLine =
     border-top: 1px solid var(--rule);
   }
 
-  /* ---------- Small screens: meadow on top, sheet slides over ---------- */
+  /* ---------- Small screens: a stack of glass cards over the forest ----------
+     One full-width sheet would hide the forest as soon as you scroll, so on
+     phones the page breaks into separate cards with gutters and gaps that keep
+     the trees in view. */
   @media (max-width: 760px) {
     .sheet {
+      --pad-x: 18px;
       width: 100%;
-      --pad-x: 22px;
       margin: 38vh 0 0;
-      padding: 4px var(--pad-x) 32px;
-      border-radius: 22px 22px 0 0;
-      border-width: 1px 0 0;
+      padding: 0 14px 20px;
+      border: 0;
+      border-radius: 0;
+      background: none;
+      box-shadow: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
     }
 
     .sheet::before {
-      inset: -1px 0 0;
+      display: none;
+    }
+
+    .top,
+    .hero,
+    .block,
+    .foot {
+      margin: 0 0 14px;
+      border: 1px solid var(--glass-edge);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--paper) 76%, transparent); /* the forest glows through */
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      backdrop-filter: blur(20px) saturate(1.4);
+      box-shadow: 0 10px 30px -14px rgb(5 20 8 / 0.5);
+    }
+
+    .top,
+    .top.stuck {
+      top: 8px;
+      padding: 12px 16px;
+      border-radius: 16px;
+      background-color: color-mix(in srgb, var(--paper) 86%, transparent);
+    }
+
+    .top::after {
+      display: none;
     }
 
     nav {
@@ -1087,7 +1119,12 @@ const pendingLine =
     }
 
     .hero {
-      padding: 44px 0 40px;
+      padding: 26px var(--pad-x) 22px;
+    }
+
+    .foot {
+      margin-bottom: 0;
+      padding: 14px var(--pad-x);
     }
 
     .intro {
@@ -1111,7 +1148,7 @@ const pendingLine =
     .block {
       grid-template-columns: 1fr;
       gap: 14px;
-      padding: 32px 0;
+      padding: 22px var(--pad-x);
     }
 
     .block h2 {
