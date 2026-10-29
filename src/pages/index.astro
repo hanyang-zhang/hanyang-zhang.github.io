@@ -96,7 +96,11 @@ const pendingLine =
         </div>
         <div>
           <dt>Based in</dt>
-          <dd>Sydney · <time class="clock" data-tz={profile.timezone}>--:--</time></dd>
+          <dd class="where">
+            Sydney
+            <time class="clock" data-tz={profile.timezone} aria-label="Local time in Sydney">--:--:--</time>
+            <span class="tz"></span>
+          </dd>
         </div>
       </dl>
     </section>
@@ -279,18 +283,53 @@ const pendingLine =
     window.dispatchEvent(new Event('themechange'));
   });
 
-  // Local time in Sydney.
+  // Local time in Sydney, as a little digital clock: each digit is its own
+  // cell so only the ones that change roll over, and the colons blink.
   const clock = document.querySelector<HTMLElement>('.clock');
   if (clock) {
-    const fmt = new Intl.DateTimeFormat('en-AU', {
-      timeZone: clock.dataset.tz,
+    const tz = clock.dataset.tz;
+    const fmt = new Intl.DateTimeFormat('en-GB', {
+      timeZone: tz,
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false,
+      second: '2-digit',
+      hourCycle: 'h23',
     });
-    const tick = () => (clock.textContent = fmt.format(new Date()));
+    const zone = new Intl.DateTimeFormat('en-AU', { timeZone: tz, timeZoneName: 'shortOffset' });
+    const tzLabel = document.querySelector<HTMLElement>('.tz');
+
+    clock.textContent = '';
+    const cells: HTMLSpanElement[] = [];
+    'hh:mm:ss'.split('').forEach((ch) => {
+      const cell = document.createElement('span');
+      cell.className = ch === ':' ? 'colon' : 'digit';
+      cell.textContent = ch === ':' ? ':' : '0';
+      clock.append(cell);
+      cells.push(cell);
+    });
+
+    const tick = () => {
+      const now = new Date();
+      fmt
+        .format(now)
+        .split('')
+        .forEach((ch, i) => {
+          const cell = cells[i];
+          if (!cell || cell.className.startsWith('colon') || cell.textContent === ch) return;
+          cell.textContent = ch;
+          cell.classList.remove('roll');
+          void cell.offsetWidth; // restart the roll animation
+          cell.classList.add('roll');
+        });
+      clock.setAttribute('datetime', now.toISOString());
+      if (tzLabel) tzLabel.textContent = zone.formatToParts(now).find((p) => p.type === 'timeZoneName')?.value ?? '';
+    };
     tick();
-    setInterval(tick, 15_000);
+    // line up with the start of each second
+    setTimeout(() => {
+      tick();
+      setInterval(tick, 1000);
+    }, 1000 - (Date.now() % 1000));
   }
 
   // Copy-to-clipboard for emails.
@@ -697,8 +736,58 @@ const pendingLine =
     font-size: 14px;
   }
 
+  .where {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+  }
+
+  /* a small digital clock: monospaced cells, rolling digits, blinking colons */
   .clock {
+    display: inline-flex;
+    padding: 1px 7px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    font-family: var(--mono);
+    font-size: 13px;
     font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+  }
+
+  .clock .digit {
+    display: inline-block;
+    min-width: 1ch;
+    text-align: center;
+  }
+
+  .clock .digit:global(.roll) {
+    animation: roll 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  @keyframes roll {
+    from {
+      opacity: 0;
+      transform: translateY(-45%);
+    }
+  }
+
+  .clock .colon {
+    animation: blink 1s steps(1, end) infinite;
+  }
+
+  @keyframes blink {
+    50% {
+      opacity: 0.25;
+    }
+  }
+
+  .tz {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
   }
 
   /* ---------- Sections ---------- */
