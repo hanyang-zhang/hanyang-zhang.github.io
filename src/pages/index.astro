@@ -73,7 +73,7 @@ const pendingLine =
       <nav aria-label="Sections">
         {navItems.map((s) => <a href={`#${s.id}`} data-section={s.id}>{s.label}</a>)}
       </nav>
-      <button class="theme" type="button" aria-label="Toggle day and night">
+      <button class="theme" type="button" aria-label="Toggle day and night" data-umami-event="Toggle theme">
         <svg class="sun" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="4"></circle>
           <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
@@ -127,7 +127,7 @@ const pendingLine =
               <dt>Elsewhere</dt>
               <dd class="elsewhere">
                 {links.map((l) => (
-                  <a href={l.href} target="_blank" rel="noopener" aria-label={l.label} title={l.label}>
+                  <a href={l.href} target="_blank" rel="noopener" aria-label={l.label} title={l.label} data-umami-event="Open link" data-umami-event-link={l.label}>
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       {l.icon === 'github' ? (
                         <path
@@ -171,7 +171,7 @@ const pendingLine =
           <p>
             {withTerms(p).map((part, i) =>
               i % 2 ? (
-                <button class="term" popovertarget={`ex-${explainers[part].id}`} aria-expanded="false">
+                <button class="term" popovertarget={`ex-${explainers[part].id}`} aria-expanded="false" data-umami-event="Open explainer" data-umami-event-term={part}>
                   {part}
                   <span class="cmyk" aria-hidden="true"><i /><i /><i /><i /></span>
                 </button>
@@ -209,11 +209,11 @@ const pendingLine =
           research.map((r) => (
             <article class:list={['entry', { 'has-image': r.image }]}>
               {r.image && (r.scene ? (
-                <button class="thumb" type="button" data-scene={r.scene} aria-label={`Open an interactive view of ${r.title}`}>
+                <button class="thumb" type="button" data-scene={r.scene} aria-label={`Open an interactive view of ${r.title}`} data-umami-event="Open research" data-umami-event-title={r.title}>
                   <img src={r.image} alt="" loading="lazy" style={r.focus && `object-position: ${r.focus}`} />
                 </button>
               ) : (
-                <button class="thumb" type="button" data-full={r.image} data-caption={r.title} aria-label={`Enlarge picture of ${r.title}`}>
+                <button class="thumb" type="button" data-full={r.image} data-caption={r.title} aria-label={`Enlarge picture of ${r.title}`} data-umami-event="Open research" data-umami-event-title={r.title}>
                   <img src={r.image} alt="" loading="lazy" style={r.focus && `object-position: ${r.focus}`} />
                 </button>
               ))}
@@ -286,13 +286,13 @@ const pendingLine =
           projects.map((p) => (
             <li class:list={{ 'has-image': p.image }}>
               {p.image && (
-                <button class="thumb" type="button" data-full={p.image} data-caption={p.title} aria-label={`Enlarge picture of ${p.title}`}>
+                <button class="thumb" type="button" data-full={p.image} data-caption={p.title} aria-label={`Enlarge picture of ${p.title}`} data-umami-event="Open project" data-umami-event-title={p.title}>
                   <img src={p.image} alt="" loading="lazy" style={p.focus && `object-position: ${p.focus}`} />
                 </button>
               )}
               <h3>
                 {p.href ? (
-                  <a href={p.href} target="_blank" rel="noopener">
+                  <a href={p.href} target="_blank" rel="noopener" data-umami-event="Open link" data-umami-event-link={p.title}>
                     {p.title} <span aria-hidden="true">↗</span>
                   </a>
                 ) : (
@@ -365,8 +365,8 @@ const pendingLine =
             profile.emails.map((e) => (
               <li>
                 <span class="label">{e.label}</span>
-                <a href={`mailto:${e.address}`}>{e.address}</a>
-                <button type="button" class="copy" data-copy={e.address}>Copy</button>
+                <a href={`mailto:${e.address}`} data-umami-event="Email" data-umami-event-via="link">{e.address}</a>
+                <button type="button" class="copy" data-copy={e.address} data-umami-event="Email" data-umami-event-via="copy">Copy</button>
               </li>
             ))
           }
@@ -374,7 +374,7 @@ const pendingLine =
         {
           links.length > 0 && (
             <p class="links">
-              {links.map((l) => <a href={l.href}>{l.label} ↗</a>)}
+              {links.map((l) => <a href={l.href} data-umami-event="Open link" data-umami-event-link={l.label}>{l.label} ↗</a>)}
             </p>
           )
         }

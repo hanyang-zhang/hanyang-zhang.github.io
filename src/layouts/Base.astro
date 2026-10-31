@@ -39,8 +39,46 @@ const { title, description } = Astro.props;
         document.documentElement.dataset.theme = theme;
       })();
     </script>
+
+    <!-- Cookie-free visitor stats (Umami). `data-domains` keeps local dev out of them. -->
+    <script
+      is:inline
+      defer
+      src="https://cloud.umami.is/script.js"
+      data-website-id="aa6a1b68-1efe-48c8-aede-2f448f686129"
+      data-domains="hanyang-zhang.github.io"></script>
   </head>
   <body>
     <slot />
+
+    <script>
+      // Clicks are tagged in markup with `data-umami-event`; this adds what markup can't.
+      // Umami ignores every call off the live domain, so this is safe in dev.
+      const track = (name: string, data?: Record<string, string>) =>
+        (window as { umami?: { track(n: string, d?: object): void } }).umami?.track(name, data);
+
+      // Which sections people actually reach on this one-page site, once each.
+      const reached = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            reached.unobserve(e.target);
+            track('Section reached', { section: e.target.id });
+          }
+        },
+        { rootMargin: '0px 0px -40% 0px' },
+      );
+      document.querySelectorAll('main section[id]:not(#top)').forEach((s) => reached.observe(s));
+
+      // Umami times a visit from its first event to its last, so a quiet read of one
+      // page would count as 0 s. A pulse every 30 s while the tab is visible fixes that,
+      // capped at 10 minutes to stay well inside the free event allowance.
+      let beats = 0;
+      const pulse = setInterval(() => {
+        if (document.visibilityState !== 'visible') return;
+        track('Still reading');
+        if (++beats >= 20) clearInterval(pulse);
+      }, 30_000);
+    </script>
   </body>
 </html>
