@@ -329,6 +329,9 @@ const pendingLine =
       <h2><span>{num('drawing')}</span>Off the clock</h2>
       <div class="body">
         <p>{sketchesNote.map((line, i) => <>{i > 0 && <br />}{line}</>)}</p>
+        <!-- Folded by default; the lazy images only load once it is opened. -->
+        <details class="peek">
+        <summary data-umami-event="Open sketches">Peek at the sketches</summary>
         <!-- A slow, endless drift: the row is drawn twice so it can loop. Pieces lift a little on hover, never to full size. -->
         <div class="sketches">
           <ul>
@@ -353,6 +356,7 @@ const pendingLine =
             }
           </ul>
         </div>
+        </details>
       </div>
     </section>}
 
@@ -1518,6 +1522,42 @@ const pendingLine =
   #drawing {
     position: relative;
     z-index: 2;
+  }
+
+  .peek summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 11px;
+    font-size: 12.5px;
+    border-radius: 99px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+  }
+
+  .peek summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .peek summary::after {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border: solid currentColor;
+    border-width: 0 1.5px 1.5px 0;
+    transform: translateY(-1px) rotate(45deg);
+    transition: transform 0.2s;
+  }
+
+  .peek[open] summary::after {
+    transform: translateY(1px) rotate(-135deg);
+  }
+
+  .peek summary:hover {
+    background: color-mix(in srgb, var(--accent) 16%, var(--accent-soft));
   }
 
   .sketches {

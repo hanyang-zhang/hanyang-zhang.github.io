@@ -14,12 +14,12 @@ export const profile = {
   timezone: 'Australia/Sydney',
   tagline: 'I study how people and AI make things together — and how AI can support people without taking over.',
   bio: [
-    'I’m a Master of Computer Science student at the University of Sydney, supervised by Prof. Eduardo Velloso. My research sits in Human–Computer Interaction, with a focus on human–AI co-creation and social computing.',
+    'I’m a Master of Computer Science student at the University of Sydney, supervised by Prof. Eduardo Velloso. My research sits in Human-Computer Interaction, with a focus on human-AI co-creation and social computing.',
     'I design and build systems, then study them with people: in live lectures, in creative communities online, and in the tools in between. Before Sydney, I studied Printing Engineering at Xi’an University of Technology and worked as a research assistant on LLM tools for power-system engineers.',
   ],
   interests: [
-    'Human–Computer Interaction',
-    'Human–AI Co-Creation',
+    'Human-Computer Interaction',
+    'Human-AI Co-Creation',
     'Social Computing',
     'LLMs & MLLMs',
     'Interdisciplinary Research',
@@ -188,14 +188,14 @@ type Tag = { label: string; kind: 'target' | 'venue' | 'type' | 'score' | 'award
 // and TreellisScene.astro).
 export const research: { title: string; when: string; tags: Tag[]; summary: string; image?: string; focus?: string; scene?: 'wager' | 'treellis' | 'pelita' | 'lecnote' }[] = [
   {
-    title: 'AI Art Wagers in Chinese Online Art Communities',
+    title: 'AI Accusations in Online Art Communities',
     when: '2026 —',
-    tags: [{ label: 'Targeting FAccT ’27', kind: 'target' }],
+    // Kept vague on purpose while the paper is under double-blind review.
+    tags: [{ label: 'In progress', kind: 'type' }],
     image: '/research/wager.jpg',
     focus: 'center 45%',
     scene: 'wager',
-    summary:
-      'On Xiaohongshu, suspicions of AI use can escalate into public wagers with money on the line, drawing demonstrations, and negotiated judging rules. I trace how these challenges unfold — how people set rules, present evidence, and live with the outcome.',
+    summary: 'An ongoing study of how online artists respond to AI accusations. More after review.',
   },
   {
     title: 'Pelita: AI Assistance Embedded in Course Materials',
@@ -221,7 +221,7 @@ export const research: { title: string; when: string; tags: Tag[]; summary: stri
       'I built LecNote, a full-stack platform whose AI help is grounded in selected slide regions, and ran a within-subjects study (N = 12) comparing learner-initiated and system-initiated assistance.',
   },
   {
-    title: 'Treellis: Progressive Human–AI Co-Creation of 3D Models',
+    title: 'Treellis: Progressive Human-AI Co-Creation of 3D Models',
     when: '2026',
     tags: [
       { label: 'UIST ’26', kind: 'venue' },
@@ -246,7 +246,7 @@ export const research: { title: string; when: string; tags: Tag[]; summary: stri
 // The stages of an AI wager, listed beside its 3D scene; each one drives the scene.
 export const wagerStages = [
   { title: 'Suspicion', text: 'Someone publicly suggests a creator’s work used AI.' },
-  { title: 'Wager', text: 'One side puts money on it; the other accepts or walks away.' },
+  { title: 'Challenge', text: 'One side stakes something on it; the other accepts or walks away.' },
   { title: 'Rules', text: 'Stake, livestream format, who votes, what voids the bet.' },
   { title: 'Livestream', text: 'The creator draws live; files go to an intermediary.' },
   { title: 'Adjudication', text: 'Eligible viewers vote: AI or not.' },
@@ -290,7 +290,7 @@ export const projects: { title: string; kind: string; summary: string; image?: s
   {
     title: 'Campus Sound Identity',
     kind: 'Installation',
-    summary: 'A cardboard “vending machine” that trades your mood for a sound of campus — prototyped and tested Wizard-of-Oz style.',
+    summary: 'A cardboard “vending machine” that trades your mood for a sound of campus, prototyped and tested Wizard-of-Oz style.',
     image: '/projects/campus-sound.jpg',
     focus: 'center 55%',
   },
