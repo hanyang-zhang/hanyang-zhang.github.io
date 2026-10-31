@@ -30,8 +30,13 @@ export const profile = {
     { label: 'Personal', address: 'hanyang.y.zhang@gmail.com' },
     { label: 'University', address: 'hzha0935@uni.sydney.edu.au' },
   ],
-  // e.g. { label: 'GitHub', href: 'https://github.com/…' }
-  links: [] as { label: string; href: string }[],
+  // Shown as round icons beside "Based in" and as text links under Contact.
+  // A link with an empty href is skipped.
+  links: [
+    { label: 'GitHub', icon: 'github', href: 'https://github.com/HanyangOnSaturn' },
+    { label: 'LinkedIn', icon: 'linkedin', href: 'https://www.linkedin.com/in/hanyang-zhang-1b3444324/' },
+    { label: 'Sydney HCC Lab', icon: 'lab', href: 'https://sydney-hcc.org/team/hanyang-zhang' },
+  ] as { label: string; icon: 'github' | 'linkedin' | 'lab'; href: string }[],
 };
 
 export const news = [
